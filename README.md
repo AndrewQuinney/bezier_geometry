@@ -6,7 +6,7 @@ Initial generation of makefiles can be done by opening the project in [NetBeans]
 ![NetBeans Plugin Sources](readme_assets/netbeans_plugin_sources.png)
 ![NetBeans Installed Plugins](readme_assets/netbeans_installed_plugins.png)
 
-This will allow for convenient editing in isolation in addition to reconfigured unit tests. However, all code is standard C++11, and may also be included in any project as simple source and header files.
+This will allow for convenient editing in isolation in addition to the use of preconfigured unit tests. However, all code is standard C++11, and may also be included in any project as simple source and header files.
 ## Contributing
 The code format uses the LLVM clang-format style:
 
