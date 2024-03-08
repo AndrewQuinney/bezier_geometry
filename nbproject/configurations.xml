@@ -1,0 +1,435 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configurationDescriptor version="100">
+  <logicalFolder name="root" displayName="root" projectFiles="true" kind="ROOT">
+    <logicalFolder name="HeaderFiles"
+                   displayName="Header Files"
+                   projectFiles="true">
+      <itemPath>BezierCurveQ.hpp</itemPath>
+      <itemPath>BezierGeometryGlobal.hpp</itemPath>
+      <itemPath>CircleArc.hpp</itemPath>
+      <itemPath>CritsAndValues.hpp</itemPath>
+      <itemPath>GeometryUtil.hpp</itemPath>
+      <itemPath>Point2D.hpp</itemPath>
+      <itemPath>PolynomialFunction.hpp</itemPath>
+      <itemPath>PrecompiledEquations.hpp</itemPath>
+      <itemPath>Shape.hpp</itemPath>
+    </logicalFolder>
+    <logicalFolder name="ResourceFiles"
+                   displayName="Resource Files"
+                   projectFiles="true">
+    </logicalFolder>
+    <logicalFolder name="SourceFiles"
+                   displayName="Source Files"
+                   projectFiles="true">
+      <itemPath>BezierCurveQ.cpp</itemPath>
+      <itemPath>BezierGeometryGlobal.cpp</itemPath>
+      <itemPath>CircleArc.cpp</itemPath>
+      <itemPath>GeometryUtil.cpp</itemPath>
+      <itemPath>Point2D.cpp</itemPath>
+      <itemPath>PolynomialFunction.cpp</itemPath>
+      <itemPath>PrecompiledEquations.cpp</itemPath>
+      <itemPath>Shape.cpp</itemPath>
+    </logicalFolder>
+    <logicalFolder name="TestFiles"
+                   displayName="Test Files"
+                   projectFiles="false"
+                   kind="TEST_LOGICAL_FOLDER">
+      <logicalFolder name="f6"
+                     displayName="BezierCurveQTest"
+                     projectFiles="true"
+                     kind="TEST">
+        <itemPath>tests/BezierCurveQTest.cpp</itemPath>
+      </logicalFolder>
+      <logicalFolder name="f4"
+                     displayName="GeometryUtilTest"
+                     projectFiles="true"
+                     kind="TEST">
+        <itemPath>tests/GeometryUtilTest.cpp</itemPath>
+      </logicalFolder>
+      <logicalFolder name="f2" displayName="MathTest" projectFiles="true" kind="TEST">
+        <itemPath>tests/MathTest.cpp</itemPath>
+      </logicalFolder>
+      <logicalFolder name="f3"
+                     displayName="Point2DTest"
+                     projectFiles="true"
+                     kind="TEST">
+        <itemPath>tests/Point2DTest.cpp</itemPath>
+      </logicalFolder>
+      <logicalFolder name="f5"
+                     displayName="PolynomialFunctionTest"
+                     projectFiles="true"
+                     kind="TEST">
+        <itemPath>tests/PolynomialFunctionTest.cpp</itemPath>
+      </logicalFolder>
+      <logicalFolder name="f7"
+                     displayName="ShapeTest"
+                     projectFiles="true"
+                     kind="TEST">
+        <itemPath>tests/ShapeTest.cpp</itemPath>
+      </logicalFolder>
+      <logicalFolder name="f1"
+                     displayName="TestUtils"
+                     projectFiles="true"
+                     kind="TEST">
+        <itemPath>tests/TestUtils.cpp</itemPath>
+        <itemPath>tests/TestUtils.hpp</itemPath>
+      </logicalFolder>
+    </logicalFolder>
+    <logicalFolder name="ExternalFiles"
+                   displayName="Important Files"
+                   projectFiles="false"
+                   kind="IMPORTANT_FILES_FOLDER">
+      <itemPath>Makefile</itemPath>
+    </logicalFolder>
+  </logicalFolder>
+  <projectmakefile>Makefile</projectmakefile>
+  <confs>
+    <conf name="Debug" type="3">
+      <toolsSet>
+        <compilerSet>default</compilerSet>
+        <dependencyChecking>true</dependencyChecking>
+        <rebuildPropChanged>false</rebuildPropChanged>
+      </toolsSet>
+      <compileType>
+        <ccTool>
+          <standard>8</standard>
+        </ccTool>
+        <archiverTool>
+        </archiverTool>
+      </compileType>
+      <item path="BezierCurveQ.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="BezierCurveQ.hpp" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="BezierGeometryGlobal.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="BezierGeometryGlobal.hpp" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="CircleArc.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="CircleArc.hpp" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="CritsAndValues.hpp" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="GeometryUtil.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="GeometryUtil.hpp" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="Point2D.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="Point2D.hpp" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="PolynomialFunction.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="PolynomialFunction.hpp" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="PrecompiledEquations.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="PrecompiledEquations.hpp" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="Shape.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="Shape.hpp" ex="false" tool="3" flavor2="0">
+      </item>
+      <folder path="TestFiles/f1">
+        <cTool>
+          <incDir>
+            <pElem>.</pElem>
+          </incDir>
+        </cTool>
+        <ccTool>
+          <incDir>
+            <pElem>.</pElem>
+          </incDir>
+        </ccTool>
+        <linkerTool>
+          <output>${TESTDIR}/TestFiles/f1</output>
+        </linkerTool>
+      </folder>
+      <folder path="TestFiles/f2">
+        <cTool>
+          <incDir>
+            <pElem>.</pElem>
+          </incDir>
+        </cTool>
+        <ccTool>
+          <incDir>
+            <pElem>.</pElem>
+          </incDir>
+        </ccTool>
+        <linkerTool>
+          <output>${TESTDIR}/TestFiles/f2</output>
+        </linkerTool>
+      </folder>
+      <folder path="TestFiles/f3">
+        <cTool>
+          <incDir>
+            <pElem>.</pElem>
+          </incDir>
+        </cTool>
+        <ccTool>
+          <incDir>
+            <pElem>.</pElem>
+          </incDir>
+        </ccTool>
+        <linkerTool>
+          <output>${TESTDIR}/TestFiles/f3</output>
+        </linkerTool>
+      </folder>
+      <folder path="TestFiles/f4">
+        <cTool>
+          <incDir>
+            <pElem>.</pElem>
+          </incDir>
+        </cTool>
+        <ccTool>
+          <incDir>
+            <pElem>.</pElem>
+          </incDir>
+        </ccTool>
+        <linkerTool>
+          <output>${TESTDIR}/TestFiles/f4</output>
+        </linkerTool>
+      </folder>
+      <folder path="TestFiles/f5">
+        <cTool>
+          <incDir>
+            <pElem>.</pElem>
+          </incDir>
+        </cTool>
+        <ccTool>
+          <incDir>
+            <pElem>.</pElem>
+          </incDir>
+        </ccTool>
+        <linkerTool>
+          <output>${TESTDIR}/TestFiles/f5</output>
+        </linkerTool>
+      </folder>
+      <folder path="TestFiles/f6">
+        <cTool>
+          <incDir>
+            <pElem>.</pElem>
+          </incDir>
+        </cTool>
+        <ccTool>
+          <incDir>
+            <pElem>.</pElem>
+          </incDir>
+        </ccTool>
+        <linkerTool>
+          <output>${TESTDIR}/TestFiles/f6</output>
+        </linkerTool>
+      </folder>
+      <folder path="TestFiles/f7">
+        <cTool>
+          <incDir>
+            <pElem>.</pElem>
+          </incDir>
+        </cTool>
+        <ccTool>
+          <incDir>
+            <pElem>.</pElem>
+          </incDir>
+        </ccTool>
+        <linkerTool>
+          <output>${TESTDIR}/TestFiles/f7</output>
+        </linkerTool>
+      </folder>
+      <item path="tests/BezierCurveQTest.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="tests/GeometryUtilTest.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="tests/MathTest.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="tests/Point2DTest.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="tests/PolynomialFunctionTest.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="tests/ShapeTest.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="tests/TestUtils.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="tests/TestUtils.hpp" ex="false" tool="3" flavor2="0">
+      </item>
+    </conf>
+    <conf name="Release" type="3">
+      <toolsSet>
+        <compilerSet>default</compilerSet>
+        <dependencyChecking>true</dependencyChecking>
+        <rebuildPropChanged>false</rebuildPropChanged>
+      </toolsSet>
+      <compileType>
+        <cTool>
+          <developmentMode>5</developmentMode>
+        </cTool>
+        <ccTool>
+          <developmentMode>5</developmentMode>
+        </ccTool>
+        <fortranCompilerTool>
+          <developmentMode>5</developmentMode>
+        </fortranCompilerTool>
+        <asmTool>
+          <developmentMode>5</developmentMode>
+        </asmTool>
+        <archiverTool>
+        </archiverTool>
+      </compileType>
+      <item path="BezierCurveQ.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="BezierCurveQ.hpp" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="BezierGeometryGlobal.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="BezierGeometryGlobal.hpp" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="CircleArc.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="CircleArc.hpp" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="CritsAndValues.hpp" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="GeometryUtil.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="GeometryUtil.hpp" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="Point2D.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="Point2D.hpp" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="PolynomialFunction.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="PolynomialFunction.hpp" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="PrecompiledEquations.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="PrecompiledEquations.hpp" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="Shape.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="Shape.hpp" ex="false" tool="3" flavor2="0">
+      </item>
+      <folder path="TestFiles/f1">
+        <cTool>
+          <incDir>
+            <pElem>.</pElem>
+          </incDir>
+        </cTool>
+        <ccTool>
+          <incDir>
+            <pElem>.</pElem>
+          </incDir>
+        </ccTool>
+        <linkerTool>
+          <output>${TESTDIR}/TestFiles/f1</output>
+        </linkerTool>
+      </folder>
+      <folder path="TestFiles/f2">
+        <cTool>
+          <incDir>
+            <pElem>.</pElem>
+          </incDir>
+        </cTool>
+        <ccTool>
+          <incDir>
+            <pElem>.</pElem>
+          </incDir>
+        </ccTool>
+        <linkerTool>
+          <output>${TESTDIR}/TestFiles/f2</output>
+        </linkerTool>
+      </folder>
+      <folder path="TestFiles/f3">
+        <cTool>
+          <incDir>
+            <pElem>.</pElem>
+          </incDir>
+        </cTool>
+        <ccTool>
+          <incDir>
+            <pElem>.</pElem>
+          </incDir>
+        </ccTool>
+        <linkerTool>
+          <output>${TESTDIR}/TestFiles/f3</output>
+        </linkerTool>
+      </folder>
+      <folder path="TestFiles/f4">
+        <cTool>
+          <incDir>
+            <pElem>.</pElem>
+          </incDir>
+        </cTool>
+        <ccTool>
+          <incDir>
+            <pElem>.</pElem>
+          </incDir>
+        </ccTool>
+        <linkerTool>
+          <output>${TESTDIR}/TestFiles/f4</output>
+        </linkerTool>
+      </folder>
+      <folder path="TestFiles/f5">
+        <cTool>
+          <incDir>
+            <pElem>.</pElem>
+          </incDir>
+        </cTool>
+        <ccTool>
+          <incDir>
+            <pElem>.</pElem>
+          </incDir>
+        </ccTool>
+        <linkerTool>
+          <output>${TESTDIR}/TestFiles/f5</output>
+        </linkerTool>
+      </folder>
+      <folder path="TestFiles/f6">
+        <cTool>
+          <incDir>
+            <pElem>.</pElem>
+          </incDir>
+        </cTool>
+        <ccTool>
+          <incDir>
+            <pElem>.</pElem>
+          </incDir>
+        </ccTool>
+        <linkerTool>
+          <output>${TESTDIR}/TestFiles/f6</output>
+        </linkerTool>
+      </folder>
+      <folder path="TestFiles/f7">
+        <cTool>
+          <incDir>
+            <pElem>.</pElem>
+          </incDir>
+        </cTool>
+        <ccTool>
+          <incDir>
+            <pElem>.</pElem>
+          </incDir>
+        </ccTool>
+        <linkerTool>
+          <output>${TESTDIR}/TestFiles/f7</output>
+        </linkerTool>
+      </folder>
+      <item path="tests/BezierCurveQTest.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="tests/GeometryUtilTest.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="tests/MathTest.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="tests/Point2DTest.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="tests/PolynomialFunctionTest.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="tests/ShapeTest.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="tests/TestUtils.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="tests/TestUtils.hpp" ex="false" tool="3" flavor2="0">
+      </item>
+    </conf>
+  </confs>
+</configurationDescriptor>
