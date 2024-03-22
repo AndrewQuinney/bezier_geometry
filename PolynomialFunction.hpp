@@ -7,6 +7,7 @@
 
 #include "BezierGeometryGlobal.hpp"
 #include "GeometryUtil.hpp"
+#include "StaticVector.hpp"
 
 namespace bezier_geometry {
 static constexpr RealNum MAX_ROOT_MAGNITUDE = 1000000000; // 1 billion.
@@ -19,6 +20,7 @@ template <std::size_t COEFF_COUNT> class PolynomialFunction {
 public:
   typedef PolynomialFunction<(COEFF_COUNT > 1) ? (COEFF_COUNT - 1) : 1>
       DerivativeType;
+  using RootsType = StaticVector<RealNum, COEFF_COUNT - 1>;
   static constexpr std::size_t coefficientCount = COEFF_COUNT;
 
   PolynomialFunction(const std::array<RealNum, COEFF_COUNT> &coeffs)
@@ -38,8 +40,8 @@ public:
     return coeffs[COEFF_IDX];
   }
 
-  std::vector<RealNum> getRoots(const RealNum &lowerBound,
-                                const RealNum &upperBound) const {
+  RootsType getRoots(const RealNum &lowerBound,
+                     const RealNum &upperBound) const {
     if (lowerBound > upperBound) {
       throw std::string(
           "Attempted to get roots over an interval with negative size.");
@@ -48,14 +50,13 @@ public:
       throw std::string("Attempted to get roots on a constant function: ") +
           toString();
     }
-    std::vector<RealNum> result;
-    getRootsInternal(lowerBound, upperBound, result);
+    RootsType result(getRootsInternal(lowerBound, upperBound));
     if (result.empty()) {
       return result;
     }
     std::sort(result.begin(), result.end());
     {
-      std::vector<RealNum>::iterator i = result.begin();
+      typename RootsType::iterator i = result.begin();
       while (i != result.end()) {
         if (*i > lowerBound || sufficientlyClose(*i, lowerBound)) {
           break;
@@ -81,9 +82,9 @@ public:
       }
     }
     {
-      std::vector<RealNum>::iterator i = result.begin();
+      typename RootsType::iterator i = result.begin();
       while (i != result.end()) {
-        std::vector<RealNum>::iterator j = i + 1;
+        typename RootsType::iterator j = i + 1;
         for (; j != result.end() && *i == *j; j++) {
         }
         if (j == i + 1) {
@@ -94,7 +95,7 @@ public:
       }
     }
     if (!result.empty()) {
-      for (std::vector<RealNum>::iterator i = result.begin() + 1;
+      for (typename RootsType::iterator i = result.begin() + 1;
            i != result.end();) {
         if (sufficientlyClose(*i, *(i - 1))) {
           const RealNum currentValue = fabs(valueAt(*i));
@@ -276,22 +277,23 @@ private:
   }
 
   template <std::size_t C = COEFF_COUNT>
-  typename std::enable_if<C == 2>::type
+  typename std::enable_if<C == 2, RootsType>::type
   getRootsInternal(__attribute__((unused)) const RealNum &lowerBound,
-                   __attribute__((unused)) const RealNum &upperBound,
-                   std::vector<RealNum> &result) const {
+                   __attribute__((unused)) const RealNum &upperBound) const {
     const RealNum root = (-1.0) * valueAt(0) / getDerivative().valueAt(0);
     if (isnan(root) || std::isinf(root)) {
       throw std::string("Attempted to get roots on a constant function: ") +
           toString();
     }
+    RootsType result;
     result.push_back((-1.0) * valueAt(0) / getDerivative().valueAt(0));
+    return result;
   }
 
   template <std::size_t C = COEFF_COUNT>
-  typename std::enable_if<C == 3>::type
-  getRootsInternal(const RealNum &lowerBound, const RealNum &upperBound,
-                   std::vector<RealNum> &result) const {
+  typename std::enable_if<C == 3, RootsType>::type
+  getRootsInternal(const RealNum &lowerBound, const RealNum &upperBound) const {
+    RootsType result;
     const RealNum discriminant =
         pow(getCoefficient<1>(), 2) -
         (4 * getCoefficient<2>() * getCoefficient<0>());
@@ -306,8 +308,14 @@ private:
         throw std::string("Attempted to get roots on a constant function: ") +
             toString();
       } else if (std::isinf(calculatedRoot)) {
-        PolynomialFunction<2>({getCoefficient<0>(), getCoefficient<1>()})
-            .getRootsInternal(lowerBound, upperBound, result);
+        typename PolynomialFunction<2>::RootsType deg2Roots(
+            PolynomialFunction<2>({getCoefficient<0>(), getCoefficient<1>()})
+                .getRootsInternal(lowerBound, upperBound));
+        for (const RealNum &current :
+             PolynomialFunction<2>({getCoefficient<0>(), getCoefficient<1>()})
+                 .getRootsInternal(lowerBound, upperBound)) {
+          result.push_back(current);
+        }
       } else {
         RealNum refinedRoot = newtonsMethod<3>(calculatedRoot, derivative);
         refinedRoot = fabs(valueAt(calculatedRoot)) < fabs(valueAt(refinedRoot))
@@ -322,8 +330,11 @@ private:
       const RealNum root1 = (negativeB + discriminantSqrt) / _2a;
       const RealNum root2 = (negativeB - discriminantSqrt) / _2a;
       if (std::isinf(root1) || std::isinf(root2)) {
-        PolynomialFunction<2>({getCoefficient<0>(), getCoefficient<1>()})
-            .getRootsInternal(lowerBound, upperBound, result);
+        for (const RealNum &current :
+             PolynomialFunction<2>({getCoefficient<0>(), getCoefficient<1>()})
+                 .getRootsInternal(lowerBound, upperBound)) {
+          result.push_back(current);
+        }
       } else if (isnan(root1) || isnan(root2)) {
         throw std::string("Attempted to get roots on a constant function: ") +
             toString();
@@ -332,12 +343,13 @@ private:
         result.push_back(newtonsMethod<3>(root2, derivative));
       }
     }
+    return result;
   }
 
   template <std::size_t C = COEFF_COUNT>
-  typename std::enable_if<(C > 3)>::type
-  getRootsInternal(const RealNum &lowerBound, const RealNum &upperBound,
-                   std::vector<RealNum> &result) const {
+  typename std::enable_if<(C > 3), RootsType>::type
+  getRootsInternal(const RealNum &lowerBound, const RealNum &upperBound) const {
+    RootsType result;
     const DerivativeType derivative(getDerivative());
     RealNum root = std::numeric_limits<RealNum>::quiet_NaN();
     for (const RealNum &currentCoefficient : {0.0, 0.33, 0.66, 1.0}) {
@@ -440,15 +452,18 @@ private:
         divisionResultCoeffs[COEFF_COUNT - 2] = coeffs[COEFF_COUNT - 1];
         populateRootDivisionResult(divisionResultCoeffs, root);
       }
-      const std::vector<RealNum>::size_type lastIdx = result.size();
+      const std::size_t lastIdx = result.size();
       {
         const PolynomialFunction<COEFF_COUNT - 1> divisionResult(
             divisionResultCoeffs);
         if (!divisionResult.preciseIsConstant()) {
-          divisionResult.getRootsInternal(lowerBound, upperBound, result);
+          for (const RealNum &current :
+               divisionResult.getRootsInternal(lowerBound, upperBound)) {
+            result.push_back(current);
+          }
         }
       }
-      std::vector<RealNum>::iterator currentRoot = result.begin();
+      typename RootsType::iterator currentRoot = result.begin();
       std::advance(currentRoot, lastIdx);
       for (; currentRoot != result.end();
            currentRoot++) { // If dividing the function caused an error
@@ -464,6 +479,7 @@ private:
         }
       }
     }
+    return result;
   }
 
   template <std::size_t CURRENT_COEFF_IDX>
@@ -738,13 +754,14 @@ private:
   }
 };
 
-std::vector<std::pair<RealNum, RealNum>> solveSystem(
+StaticVector<std::pair<RealNum, RealNum>, 16> solveSystem(
     const PolynomialFunction<3> &eq1Left, const PolynomialFunction<3> &eq1Right,
     const PolynomialFunction<3> &eq2Left, const PolynomialFunction<3> &eq2Right,
     const RealNum &leftLowerBound, const RealNum &leftUpperBound,
     const RealNum &rightLowerBound, const RealNum &rightUpperBound);
 
-bool isSolutionInfinite(const std::vector<std::pair<RealNum, RealNum>> &input);
+bool isSolutionInfinite(
+    const StaticVector<std::pair<RealNum, RealNum>, 4> &input);
 
 std::pair<RealNum, RealNum>
 solve2VarLinearSystem(const RealNum &tValue, const RealNum &uValue,

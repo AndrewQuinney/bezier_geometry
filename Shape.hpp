@@ -74,8 +74,14 @@ public:
                                      const Point2D &myRotationFulcrum,
                                      bool myRotationClockwise) const;
   std::string toString() const;
-  static Shape approximateCircle(const Point2D &centre, const RealNum &radius,
-                                 int edges);
+
+  template <std::size_t EDGES>
+  static Shape approximateCircle(const Point2D &centre, const RealNum &radius) {
+    std::pair<std::vector<Point2D>, std::vector<Point2D>> circleArcPoints(
+        BezierCurveQ::circleArc<EDGES>(centre, radius, 0, 360));
+    circleArcPoints.first.pop_back();
+    return Shape(circleArcPoints.first, circleArcPoints.second);
+  }
 
 private:
   std::vector<BezierCurveQ> edges;

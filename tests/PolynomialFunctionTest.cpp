@@ -29,26 +29,12 @@ void testRoots(
     debug() << "*** BEFORE getRoots - function:" << testFunction
             << "lowerBound:" << lowerBound << "upperBound:" << upperBound
             << std::endl;
-    const std::vector<bezier_geometry::RealNum> roots(
-        testFunction.getRoots(lowerBound, upperBound));
+    const typename bezier_geometry::PolynomialFunction<COEFF_COUNT>::RootsType
+        roots(testFunction.getRoots(lowerBound, upperBound));
     {
-      struct LocalFunctions {
-        static std::string
-        printVector(const std::vector<bezier_geometry::RealNum> &input) {
-          std::string result;
-          for (const bezier_geometry::RealNum &current : input) {
-            result += result.length() > 0 ? ", " : "";
-            result += bezier_geometry::toString(current);
-          }
-          return result;
-        }
-      };
-      debug()
-          << "*** AFTER getRoots -"
-          << "expected:"
-          << printArray(
-                 expectedResult) // LocalFunctions::printVector(expectedResult)
-          << "actual" << LocalFunctions::printVector(roots) << std::endl;
+      debug() << "*** AFTER getRoots -"
+              << "expected:" << printArray(expectedResult) << "actual" << roots
+              << std::endl;
     }
     CHECK(roots.size(), expectedResult.size());
     {
@@ -59,8 +45,8 @@ void testRoots(
         currentExpectedResult++;
       }
     }
-    for (std::vector<bezier_geometry::RealNum>::const_iterator i =
-             roots.begin();
+    for (typename bezier_geometry::PolynomialFunction<
+             COEFF_COUNT>::RootsType::const_iterator i = roots.begin();
          i != roots.end(); i++) {
       if (bezier_geometry::sufficientlyClose(testFunction.valueAt(*i), 0)) {
         continue;
@@ -502,7 +488,10 @@ void reduceTest() {
             std::pair<bezier_geometry::RealNum, bezier_geometry::RealNum>>(
             {{1, 0}})}});
   for (const ReduceTestEntry &current : testEntries) {
-    std::vector<std::pair<bezier_geometry::RealNum, bezier_geometry::RealNum>>
+
+    debug() << "-_-_ CASE01 " << current.eq1Left << std::endl;
+    bezier_geometry::StaticVector<
+        std::pair<bezier_geometry::RealNum, bezier_geometry::RealNum>, 16>
         result = bezier_geometry::solveSystem(
             current.eq1Left, current.eq1Right, current.eq2Left,
             current.eq2Right, current.leftLowerBound, current.leftUpperBound,

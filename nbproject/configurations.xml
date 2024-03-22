@@ -13,6 +13,7 @@
       <itemPath>PolynomialFunction.hpp</itemPath>
       <itemPath>PrecompiledEquations.hpp</itemPath>
       <itemPath>Shape.hpp</itemPath>
+      <itemPath>StaticVector.hpp</itemPath>
     </logicalFolder>
     <logicalFolder name="ResourceFiles"
                    displayName="Resource Files"
@@ -66,6 +67,12 @@
                      projectFiles="true"
                      kind="TEST">
         <itemPath>tests/ShapeTest.cpp</itemPath>
+      </logicalFolder>
+      <logicalFolder name="f8"
+                     displayName="StaticVectorTest"
+                     projectFiles="true"
+                     kind="TEST">
+        <itemPath>tests/StaticVectorTest.cpp</itemPath>
       </logicalFolder>
       <logicalFolder name="f1"
                      displayName="TestUtils"
@@ -131,6 +138,8 @@
       </item>
       <item path="Shape.hpp" ex="false" tool="3" flavor2="0">
       </item>
+      <item path="StaticVector.hpp" ex="false" tool="3" flavor2="0">
+      </item>
       <folder path="TestFiles/f1">
         <cTool>
           <incDir>
@@ -236,6 +245,21 @@
           <output>${TESTDIR}/TestFiles/f7</output>
         </linkerTool>
       </folder>
+      <folder path="TestFiles/f8">
+        <cTool>
+          <incDir>
+            <pElem>.</pElem>
+          </incDir>
+        </cTool>
+        <ccTool>
+          <incDir>
+            <pElem>.</pElem>
+          </incDir>
+        </ccTool>
+        <linkerTool>
+          <output>${TESTDIR}/TestFiles/f8</output>
+        </linkerTool>
+      </folder>
       <item path="tests/BezierCurveQTest.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="tests/GeometryUtilTest.cpp" ex="false" tool="1" flavor2="0">
@@ -247,6 +271,8 @@
       <item path="tests/PolynomialFunctionTest.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="tests/ShapeTest.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="tests/StaticVectorTest.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="tests/TestUtils.cpp" ex="false" tool="1" flavor2="0">
       </item>
@@ -309,6 +335,8 @@
       </item>
       <item path="Shape.hpp" ex="false" tool="3" flavor2="0">
       </item>
+      <item path="StaticVector.hpp" ex="false" tool="3" flavor2="0">
+      </item>
       <folder path="TestFiles/f1">
         <cTool>
           <incDir>
@@ -414,6 +442,21 @@
           <output>${TESTDIR}/TestFiles/f7</output>
         </linkerTool>
       </folder>
+      <folder path="TestFiles/f8">
+        <cTool>
+          <incDir>
+            <pElem>.</pElem>
+          </incDir>
+        </cTool>
+        <ccTool>
+          <incDir>
+            <pElem>.</pElem>
+          </incDir>
+        </ccTool>
+        <linkerTool>
+          <output>${TESTDIR}/TestFiles/f8</output>
+        </linkerTool>
+      </folder>
       <item path="tests/BezierCurveQTest.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="tests/GeometryUtilTest.cpp" ex="false" tool="1" flavor2="0">
@@ -425,6 +468,8 @@
       <item path="tests/PolynomialFunctionTest.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="tests/ShapeTest.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="tests/StaticVectorTest.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="tests/TestUtils.cpp" ex="false" tool="1" flavor2="0">
       </item>

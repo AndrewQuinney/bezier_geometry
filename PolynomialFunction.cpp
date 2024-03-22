@@ -2,7 +2,7 @@
 
 namespace bezier_geometry {
 namespace {
-const std::vector<std::pair<RealNum, RealNum>>
+const StaticVector<std::pair<RealNum, RealNum>, 4>
     INFINITE_SOLUTIONS({{std::numeric_limits<RealNum>::quiet_NaN(),
                          std::numeric_limits<RealNum>::quiet_NaN()}});
 
@@ -228,7 +228,7 @@ void _reduceDeg2WithDeg2(
   }
 }
 
-void swapSides(std::vector<std::pair<RealNum, RealNum>> &input) {
+void swapSides(StaticVector<std::pair<RealNum, RealNum>, 4> &input) {
   for (std::pair<RealNum, RealNum> &current : input) {
     RealNum temp = current.first;
     current.first = current.second;
@@ -243,7 +243,7 @@ equation's value matching 'firstValue', and the second equation's value matching
 
 Returns NaN if no such value exists.
 */
-std::vector<RealNum>
+StaticVector<RealNum, 4>
 deg2PairParams(const PolynomialFunction<3> &first,
                const PolynomialFunction<3> &second, const RealNum &firstValue,
                const RealNum &secondValue, const RealNum &lowerBound,
@@ -266,7 +266,7 @@ deg2PairParams(const PolynomialFunction<3> &first,
   const RealNum f = second.getCoefficient<0>();
   const RealNum m = firstValue;
   const RealNum n = secondValue;
-  std::vector<RealNum> result;
+  StaticVector<RealNum, 4> result;
   const PolynomialFunction<5> sumOfSquares(
       {static_cast<RealNum>(pow(c, 2) + pow(f, 2) + pow(m, 2) + pow(n, 2) +
                             ((-2.0) * ((c * m) + (f * n)))),
@@ -289,7 +289,7 @@ deg2PairParams(const PolynomialFunction<3> &first,
   return result;
 }
 
-std::vector<RealNum> getOtherSideParameters(
+StaticVector<RealNum, 4> getOtherSideParameters(
     const RealNum &mySideParam, const PolynomialFunction<3> &mySideEq1,
     const PolynomialFunction<3> &mySideEq2,
     const PolynomialFunction<3> &otherSideEq1,
@@ -345,7 +345,7 @@ std::string iTs(const int input) {
                        "%d", input));
 }
 
-std::vector<std::pair<RealNum, RealNum>> solveSystem(
+StaticVector<std::pair<RealNum, RealNum>, 16> solveSystem(
     const PolynomialFunction<3> &eq1Left, const PolynomialFunction<3> &eq1Right,
     const PolynomialFunction<3> &eq2Left, const PolynomialFunction<3> &eq2Right,
     const RealNum &leftLowerBound, const RealNum &leftUpperBound,
@@ -428,7 +428,7 @@ std::vector<std::pair<RealNum, RealNum>> solveSystem(
         if (!sufficientlySmall(eq1LeftEquivalence.valueAt(0))) {
           return std::numeric_limits<RealNum>::quiet_NaN();
         }
-        const std::vector<RealNum> roots(
+        const StaticVector<RealNum, 2> roots(
             eq2LeftEquivalence.getRoots(leftLowerBound, leftUpperBound));
         return roots.empty() ? std::numeric_limits<RealNum>::quiet_NaN()
                              : roots[0];
@@ -436,7 +436,7 @@ std::vector<std::pair<RealNum, RealNum>> solveSystem(
         if (!sufficientlySmall(eq2LeftEquivalence.valueAt(0))) {
           return std::numeric_limits<RealNum>::quiet_NaN();
         }
-        const std::vector<RealNum> roots(
+        const StaticVector<RealNum, 2> roots(
             eq1LeftEquivalence.getRoots(leftLowerBound, leftUpperBound));
         return roots.empty() ? std::numeric_limits<RealNum>::quiet_NaN()
                              : roots[0];
@@ -486,7 +486,7 @@ std::vector<std::pair<RealNum, RealNum>> solveSystem(
       eq2Right.effectiveDegree(rightLowerBound, rightUpperBound);
   if (eq1LeftDegree == 0 || eq2LeftDegree == 0) {
     if (eq1RightDegree > 0 && eq2RightDegree > 0) {
-      std::vector<std::pair<RealNum, RealNum>> recursiveResult(
+      StaticVector<std::pair<RealNum, RealNum>, 4> recursiveResult(
           solveSystem(eq1Right, eq1Left, eq2Right, eq2Left, rightLowerBound,
                       rightUpperBound, leftLowerBound, leftUpperBound));
       swapSides(recursiveResult);
@@ -497,7 +497,7 @@ std::vector<std::pair<RealNum, RealNum>> solveSystem(
     }
   } else if (eq1LeftDegree + eq2LeftDegree > eq1RightDegree + eq2RightDegree &&
              eq1RightDegree > 0 && eq2RightDegree > 0) {
-    std::vector<std::pair<RealNum, RealNum>> recursiveResult(
+    StaticVector<std::pair<RealNum, RealNum>, 4> recursiveResult(
         solveSystem(eq1Right, eq1Left, eq2Right, eq2Left, rightLowerBound,
                     rightUpperBound, leftLowerBound, leftUpperBound));
     swapSides(recursiveResult);
@@ -555,9 +555,9 @@ std::vector<std::pair<RealNum, RealNum>> solveSystem(
       _reduceDeg2WithDeg2(eq1Right, eq1Left, eq2Right, eq2Left,
                           testOutputReduced, testOutputOtherSolutionNumerator,
                           testOutputOtherSolutionDenominator);
-      if (fabs(testOutputOtherSolutionDenominator) >
-          fabs(outputOtherSolutionDenominator)) {
-        std::vector<std::pair<RealNum, RealNum>> recursiveResult(
+      if (std::fabs(testOutputOtherSolutionDenominator) >
+          std::fabs(outputOtherSolutionDenominator)) {
+        StaticVector<std::pair<RealNum, RealNum>, 4> recursiveResult(
             solveSystem(eq1Right, eq1Left, eq2Right, eq2Left, rightLowerBound,
                         rightUpperBound, leftLowerBound, leftUpperBound));
         swapSides(recursiveResult);
@@ -565,7 +565,7 @@ std::vector<std::pair<RealNum, RealNum>> solveSystem(
       }
     }
   }
-  std::vector<std::pair<RealNum, RealNum>> result;
+  StaticVector<std::pair<RealNum, RealNum>, 16> result;
   if (outputReduced.isConstant(rightLowerBound, rightUpperBound)) {
     if (sufficientlySmall(outputReduced.valueAt(
             0))) { // There are infinite solutions due to equal curve shapes.
@@ -581,7 +581,7 @@ std::vector<std::pair<RealNum, RealNum>> solveSystem(
       const RealNum rightParamForLeftUpper = LocalFunctions::getLeftSideParam(
           eq1Right, eq2Right, rightLowerBound, rightUpperBound,
           eq1Left.valueAt(leftUpperBound), eq2Left.valueAt(leftUpperBound));
-      typedef std::vector<std::pair<RealNum, RealNum>> ResultType;
+      typedef StaticVector<std::pair<RealNum, RealNum>, 4> ResultType;
       if (!isnan(leftParamForRightLower) && !isnan(leftParamForRightUpper)) {
         if (leftParamForRightLower < leftParamForRightUpper) {
           result = ResultType(INFINITE_SOLUTIONS);
@@ -733,7 +733,8 @@ std::vector<std::pair<RealNum, RealNum>> solveSystem(
   return result;
 }
 
-bool isSolutionInfinite(const std::vector<std::pair<RealNum, RealNum>> &input) {
+bool isSolutionInfinite(
+    const StaticVector<std::pair<RealNum, RealNum>, 4> &input) {
   return input.size() == 3 && isnan(input.front().first) &&
          isnan(input.front().second);
 }

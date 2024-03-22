@@ -7,18 +7,18 @@ std::ostream &operator<<(std::ostream &os, const std::pair<A, B> &input) {
   return os;
 }
 
-template <typename T>
-std::ostream &operator<<(std::ostream &os, const std::vector<T> &input) {
-  os << "[";
-  for (const T &current : input) {
-    if (&current != &input.front()) {
-      os << ",";
-    }
-    os << current;
-  }
-  os << "]";
-  return os;
-}
+// template <typename T>
+// std::ostream &operator<<(std::ostream &os, const std::vector<T> &input) {
+//   os << "[";
+//   for (const T &current : input) {
+//     if (&current != &input.front()) {
+//       os << ",";
+//     }
+//     os << current;
+//   }
+//   os << "]";
+//   return os;
+// }
 
 typedef struct {
   bezier_geometry::Point2D inputStart;
@@ -224,8 +224,8 @@ void basicFunctionalityTest() {
                 bezier_geometry::Point2D(
                     test.getMaxXExtent(),
                     test.valueAt(test.getMaxXPara()).getY())));
-        std::vector<
-            std::pair<bezier_geometry::RealNum, bezier_geometry::RealNum>>
+        bezier_geometry::StaticVector<
+            std::pair<bezier_geometry::RealNum, bezier_geometry::RealNum>, 4>
             testLineIntersection(testLine.pointsOfIntersection(test));
         CHECK(bezier_geometry::BezierCurveQ::isIntersectionInfinite(
                   testLineIntersection) ||
@@ -234,7 +234,7 @@ void basicFunctionalityTest() {
         CHECK(testLine.shift(0.1, 0, true, true)
                   .pointsOfIntersection(test)
                   .size(),
-              static_cast<std::vector<int>::size_type>(0));
+              static_cast<std::size_t>(0));
       }
       CHECK(bezier_geometry::sufficientlyClose(test.getMaxYExtent(),
                                                testEntry.expectedMaxY),
@@ -249,8 +249,8 @@ void basicFunctionalityTest() {
                 0, bezier_geometry::Point2D(
                        test.valueAt(test.getMaxYPara()).getX(),
                        test.getMaxYExtent())));
-        std::vector<
-            std::pair<bezier_geometry::RealNum, bezier_geometry::RealNum>>
+        bezier_geometry::StaticVector<
+            std::pair<bezier_geometry::RealNum, bezier_geometry::RealNum>, 4>
             testLineIntersection(testLine.pointsOfIntersection(test));
         CHECK(bezier_geometry::BezierCurveQ::isIntersectionInfinite(
                   testLineIntersection) ||
@@ -263,7 +263,7 @@ void basicFunctionalityTest() {
                       true, true)
                   .pointsOfIntersection(test)
                   .size(),
-              static_cast<std::vector<int>::size_type>(0));
+              static_cast<std::size_t>(0));
       }
       CHECK(bezier_geometry::sufficientlyClose(test.getMinXExtent(),
                                                testEntry.expectedMinX),
@@ -279,8 +279,8 @@ void basicFunctionalityTest() {
                 bezier_geometry::Point2D(
                     test.getMinXExtent(),
                     test.valueAt(test.getMinXPara()).getY())));
-        std::vector<
-            std::pair<bezier_geometry::RealNum, bezier_geometry::RealNum>>
+        bezier_geometry::StaticVector<
+            std::pair<bezier_geometry::RealNum, bezier_geometry::RealNum>, 4>
             testLineIntersection(testLine.pointsOfIntersection(test));
         CHECK(bezier_geometry::BezierCurveQ::isIntersectionInfinite(
                   testLineIntersection) ||
@@ -289,7 +289,7 @@ void basicFunctionalityTest() {
         CHECK(testLine.shift(0.1, 0, false, true)
                   .pointsOfIntersection(test)
                   .size(),
-              static_cast<std::vector<int>::size_type>(0));
+              static_cast<std::size_t>(0));
       }
       CHECK(bezier_geometry::sufficientlyClose(test.getMinYExtent(),
                                                testEntry.expectedMinY),
@@ -304,8 +304,8 @@ void basicFunctionalityTest() {
                 0, bezier_geometry::Point2D(
                        test.valueAt(test.getMinYPara()).getX(),
                        test.getMinYExtent())));
-        std::vector<
-            std::pair<bezier_geometry::RealNum, bezier_geometry::RealNum>>
+        bezier_geometry::StaticVector<
+            std::pair<bezier_geometry::RealNum, bezier_geometry::RealNum>, 4>
             testLineIntersection(testLine.pointsOfIntersection(test));
         CHECK(bezier_geometry::BezierCurveQ::isIntersectionInfinite(
                   testLineIntersection) ||
@@ -318,7 +318,7 @@ void basicFunctionalityTest() {
                       true, false)
                   .pointsOfIntersection(test)
                   .size(),
-              static_cast<std::vector<int>::size_type>(0));
+              static_cast<std::size_t>(0));
       }
       for (int j = 0; j < 100; j++) {
         bezier_geometry::RealNum testParam = std::fabs(randomReal(0, 1));
@@ -393,7 +393,7 @@ void basicFunctionalityTest() {
                   .shift(1, 1, true, true)
                   .pointsOfIntersection(test)
                   .size(),
-              static_cast<std::vector<int>::size_type>(0));
+              static_cast<std::size_t>(0));
       } else {
         bezier_geometry::RealNum startSlope = test.rateOfChangeAtParam(0);
         bezier_geometry::RealNum startControlSlope =
@@ -417,7 +417,8 @@ void basicFunctionalityTest() {
 typedef struct {
   bezier_geometry::BezierCurveQ first;
   bezier_geometry::BezierCurveQ second;
-  std::vector<std::pair<bezier_geometry::RealNum, bezier_geometry::RealNum>>
+  bezier_geometry::StaticVector<
+      std::pair<bezier_geometry::RealNum, bezier_geometry::RealNum>, 4>
       firstIntersections;
 } PointsOfIntersectionTestEntry;
 
@@ -761,7 +762,8 @@ void pointsOfIntersectionTest() {
       debug() << "************** BEFORE pointsOfIntersection -"
               << "first:" << currentEntry.first
               << "second:" << currentEntry.second << std::endl;
-      std::vector<std::pair<bezier_geometry::RealNum, bezier_geometry::RealNum>>
+      bezier_geometry::StaticVector<
+          std::pair<bezier_geometry::RealNum, bezier_geometry::RealNum>, 4>
           firstIntersections(
               currentEntry.first.pointsOfIntersection(currentEntry.second));
       debug() << "************** AFTER pointsOfIntersection -"
@@ -782,20 +784,22 @@ void pointsOfIntersectionTest() {
           CHECK(firstIntersections.size(),
                 currentEntry.firstIntersections.size());
         } else {
-          std::vector<
-              std::pair<bezier_geometry::RealNum, bezier_geometry::RealNum>>
+          bezier_geometry::StaticVector<
+              std::pair<bezier_geometry::RealNum, bezier_geometry::RealNum>, 16>
               matchedParameters;
-          for (std::vector<std::pair<bezier_geometry::RealNum,
-                                     bezier_geometry::RealNum>>::iterator k =
-                   currentEntry.firstIntersections.begin();
+          for (typename bezier_geometry::StaticVector<
+                   std::pair<bezier_geometry::RealNum,
+                             bezier_geometry::RealNum>,
+                   4>::iterator k = currentEntry.firstIntersections.begin();
                k != currentEntry.firstIntersections.end(); k++) {
             if (std::find(matchedParameters.begin(), matchedParameters.end(),
                           *k) != matchedParameters.end()) {
               continue;
             }
-            for (std::vector<std::pair<bezier_geometry::RealNum,
-                                       bezier_geometry::RealNum>>::iterator l =
-                     firstIntersections.begin();
+            for (typename bezier_geometry::StaticVector<
+                     std::pair<bezier_geometry::RealNum,
+                               bezier_geometry::RealNum>,
+                     4>::iterator l = firstIntersections.begin();
                  l != firstIntersections.end(); l++) {
               if (!multiplierSet) {
                 CHECK(currentEntry.first.valueAt(l->first),
@@ -813,20 +817,14 @@ void pointsOfIntersectionTest() {
             }
           }
           if (matchedParameters.size() > 0) {
-            std::sort(matchedParameters.begin(),
-                      matchedParameters.end() /*,
-[](const std::pair<bezier_geometry::RealNum, bezier_geometry::RealNum>
-&input1, const std::pair<bezier_geometry::RealNum, bezier_geometry::RealNum>
-&input2)->bool
-{
-return input1.first < input2.first;
-}*/);
+            std::sort(matchedParameters.begin(), matchedParameters.end());
           }
           if (matchedParameters != currentEntry.firstIntersections) {
             std::string matchedOutput;
-            for (std::vector<std::pair<bezier_geometry::RealNum,
-                                       bezier_geometry::RealNum>>::iterator k =
-                     matchedParameters.begin();
+            for (typename bezier_geometry::StaticVector<
+                     std::pair<bezier_geometry::RealNum,
+                               bezier_geometry::RealNum>,
+                     16>::iterator k = matchedParameters.begin();
                  k != matchedParameters.end(); k++) {
               matchedOutput += k == matchedParameters.begin() ? "" : ", ";
               matchedOutput += "(" + bezier_geometry::toString(k->first) +
@@ -834,9 +832,10 @@ return input1.first < input2.first;
                                ")";
             }
             std::string expectedOutput;
-            for (std::vector<std::pair<bezier_geometry::RealNum,
-                                       bezier_geometry::RealNum>>::iterator k =
-                     currentEntry.firstIntersections.begin();
+            for (typename bezier_geometry::StaticVector<
+                     std::pair<bezier_geometry::RealNum,
+                               bezier_geometry::RealNum>,
+                     4>::iterator k = currentEntry.firstIntersections.begin();
                  k != currentEntry.firstIntersections.end(); k++) {
               expectedOutput +=
                   k == currentEntry.firstIntersections.begin() ? "" : ", ";
@@ -853,9 +852,9 @@ return input1.first < input2.first;
           }
           CHECK(matchedParameters, currentEntry.firstIntersections);
         }
-        for (std::vector<std::pair<bezier_geometry::RealNum,
-                                   bezier_geometry::RealNum>>::iterator k =
-                 firstIntersections.begin();
+        for (typename bezier_geometry::StaticVector<
+                 std::pair<bezier_geometry::RealNum, bezier_geometry::RealNum>,
+                 4>::iterator k = firstIntersections.begin();
              k != firstIntersections.end(); k++) {
           bezier_geometry::Point2D testPoint(
               currentEntry.first.valueAt(k->first));
@@ -2149,8 +2148,10 @@ void shiftAgainstTest() {
                 << (result.distance >= 0
                         ? moving.shift(result.distance, i->slope, right, up)
                               .pointsOfIntersection(stationary)
-                        : std::vector<std::pair<bezier_geometry::RealNum,
-                                                bezier_geometry::RealNum>>())
+                        : bezier_geometry::StaticVector<
+                              std::pair<bezier_geometry::RealNum,
+                                        bezier_geometry::RealNum>,
+                              4>())
                 << std::endl;
         CHECK(bezier_geometry::sufficientlyClose(result.distance,
                                                  expectedDistance),
@@ -2240,8 +2241,8 @@ void shiftAgainstTest() {
                     true);
             }
           }
-          std::vector<
-              std::pair<bezier_geometry::RealNum, bezier_geometry::RealNum>>
+          bezier_geometry::StaticVector<
+              std::pair<bezier_geometry::RealNum, bezier_geometry::RealNum>, 4>
               initialIntersection(moving.pointsOfIntersection(stationary));
           if (!bezier_geometry::BezierCurveQ::isIntersectionInfinite(
                   initialIntersection) &&
@@ -3612,39 +3613,40 @@ void rotateAgainstTest() {
             bezier_geometry::BezierCurveQ::RotateAgainstResult result;
             debug() << "*** BEFORE rotateAgainst ***";
             moving.rotateAgainst(stationary, fulcrum, clockwise, result);
-            debug()
-                << "^"
-                << "moving:" << moving << "stationary:" << stationary
-                << "fulcrum:" << fulcrum << "clockwise:" << clockwise
-                << "outputAngle:" << bezier_geometry::toString(result.angle)
-                << "outputParam:" << bezier_geometry::toString(result.param)
-                << "outputInputParam:"
-                << bezier_geometry::toString(result.inputParam)
-                << "blockedCWVerticalAngleStart:"
-                << result.blockedCWVerticalAngleStart
-                << "blockedCWVerticalAngleEnd:"
-                << result.blockedCWVerticalAngleEnd
-                << "expectedAngle:" << bezier_geometry::toString(expectedAngle)
-                << "rotated intersection:"
-                << (result.angle >= 0
-                        ? moving
-                              .rotate(fulcrum,
-                                      result.angle * (clockwise ? -1.0 : 1.0))
-                              .pointsOfIntersection(stationary)
-                        : std::vector<std::pair<bezier_geometry::RealNum,
-                                                bezier_geometry::RealNum>>())
-                << "moving point:"
-                << (result.param >= 0
-                        ? moving.valueAt(result.param)
-                              .rotate(fulcrum,
-                                      result.angle * (clockwise ? -1.0 : 1.0))
-                              .toString()
-                        : std::string())
-                << "stationary point:"
-                << (result.inputParam >= 0
-                        ? stationary.valueAt(result.inputParam).toString()
-                        : std::string())
-                << std::endl;
+            debug() << "^"
+                    << "moving:" << moving << "stationary:" << stationary
+                    << "fulcrum:" << fulcrum << "clockwise:" << clockwise
+                    << "outputAngle:" << bezier_geometry::toString(result.angle)
+                    << "outputParam:" << bezier_geometry::toString(result.param)
+                    << "outputInputParam:"
+                    << bezier_geometry::toString(result.inputParam)
+                    << "blockedCWVerticalAngleStart:"
+                    << result.blockedCWVerticalAngleStart
+                    << "blockedCWVerticalAngleEnd:"
+                    << result.blockedCWVerticalAngleEnd << "expectedAngle:"
+                    << bezier_geometry::toString(expectedAngle)
+                    << "rotated intersection:"
+                    << (result.angle >= 0
+                            ? moving
+                                  .rotate(fulcrum, result.angle *
+                                                       (clockwise ? -1.0 : 1.0))
+                                  .pointsOfIntersection(stationary)
+                            : bezier_geometry::StaticVector<
+                                  std::pair<bezier_geometry::RealNum,
+                                            bezier_geometry::RealNum>,
+                                  4>())
+                    << "moving point:"
+                    << (result.param >= 0
+                            ? moving.valueAt(result.param)
+                                  .rotate(fulcrum, result.angle *
+                                                       (clockwise ? -1.0 : 1.0))
+                                  .toString()
+                            : std::string())
+                    << "stationary point:"
+                    << (result.inputParam >= 0
+                            ? stationary.valueAt(result.inputParam).toString()
+                            : std::string())
+                    << std::endl;
             CHECK(
                 bezier_geometry::sufficientlyClose(result.angle, expectedAngle),
                 true);
@@ -3713,8 +3715,9 @@ void rotateAgainstTest() {
                 }
               }
             }
-            std::vector<
-                std::pair<bezier_geometry::RealNum, bezier_geometry::RealNum>>
+            bezier_geometry::StaticVector<
+                std::pair<bezier_geometry::RealNum, bezier_geometry::RealNum>,
+                4>
                 rotatedIntersection;
             if (result.angle == 0) {
               rotatedIntersection = moving.pointsOfIntersection(stationary);

@@ -24,7 +24,7 @@ public:
    * Returns the parameters and magnitude values for the input curve where the
    * curve magnitude's rate of change is 0 relative to the curve parameter.
    * */
-  virtual CritsAndValues
+  virtual CritsAndValues<5>
   getMagnitudeCritsAndValues(const BezierCurveQ &input) const = 0;
 
   /*
@@ -50,9 +50,9 @@ public:
    * */
   virtual bool isEdgeIntersectionDirectionChangeRelevant(
       const BezierCurveQ &edgeBefore,
-      const CritsAndValues &edgeBeforeCritsAndValues,
+      const CritsAndValues<5> &edgeBeforeCritsAndValues,
       const BezierCurveQ &edgeAfter,
-      const CritsAndValues &edgeAfterCritsAndValues) const = 0;
+      const CritsAndValues<5> &edgeAfterCritsAndValues) const = 0;
 
   /*
    * Calculate the direction required to shift the edge to a higher magnitude
@@ -83,8 +83,8 @@ public:
    * As above, this assumes that the points passed are not special in any way
    * for this movement (i.e. not the fulcrum for a rotation).
    * */
-  virtual std::vector<RealNum> sameMagnitude(const BezierCurveQ &edge,
-                                             const Point2D &target) const = 0;
+  virtual StaticVector<RealNum, 4>
+  sameMagnitude(const BezierCurveQ &edge, const Point2D &target) const = 0;
 
   /*
    * There is a block between two edges, but this block would not be detected by
@@ -125,11 +125,11 @@ public:
       const BezierCurveQ &moving, const RealNum &movingLowerParam,
       const RealNum &movingHigherParam,
       const std::pair<RealNum, RealNum> &movingRange,
-      const CritsAndValues &movingCritsAndValues,
+      const CritsAndValues<5> &movingCritsAndValues,
       const BezierCurveQ &stationary, const RealNum &stationaryLowerParam,
       const RealNum &stationaryHigherParam,
       const std::pair<RealNum, RealNum> &stationaryRange,
-      const CritsAndValues &stationaryCritsAndValues,
+      const CritsAndValues<5> &stationaryCritsAndValues,
       const ResultHolder &result) const = 0;
 
   /*
@@ -172,9 +172,11 @@ public:
   ShiftValueCalculation(const RealNum &slope, bool right, bool up)
       : slope(slope), right(right), up(up) {}
 
-  CritsAndValues
+  CritsAndValues<5>
   getMagnitudeCritsAndValues(const BezierCurveQ &input) const override {
-    return input.getPerpendicularMagnitudeCritsAndValues(slope);
+    const CritsAndValues<3> result(
+        input.getPerpendicularMagnitudeCritsAndValues(slope));
+    return {result.startIsCrit, result.endIsCrit, result.critsAndValues};
   }
 
   bool isEdgeDirectionChangeRelevant(const BezierCurveQ &edge,
@@ -190,9 +192,9 @@ public:
 
   bool isEdgeIntersectionDirectionChangeRelevant(
       const BezierCurveQ &edgeBefore,
-      const CritsAndValues &edgeBeforeCritsAndValues,
+      const CritsAndValues<5> &edgeBeforeCritsAndValues,
       const BezierCurveQ &edgeAfter,
-      const CritsAndValues &edgeAfterCritsAndValues)
+      const CritsAndValues<5> &edgeAfterCritsAndValues)
       const override { // Note the assumptions this method makes in the doc for
     // the implemented interface.
     (void)edgeBeforeCritsAndValues;
@@ -232,8 +234,8 @@ public:
                 : (-1.0));
   }
 
-  std::vector<RealNum> sameMagnitude(const BezierCurveQ &edge,
-                                     const Point2D &target) const override {
+  StaticVector<RealNum, 4> sameMagnitude(const BezierCurveQ &edge,
+                                         const Point2D &target) const override {
     return edge.pointShiftAgainstParams(target, slope, false);
   }
 
@@ -270,11 +272,11 @@ public:
       const BezierCurveQ &moving, const RealNum &movingLowerParam,
       const RealNum &movingHigherParam,
       const std::pair<RealNum, RealNum> &movingRange,
-      const CritsAndValues &movingCritsAndValues,
+      const CritsAndValues<5> &movingCritsAndValues,
       const BezierCurveQ &stationary, const RealNum &stationaryLowerParam,
       const RealNum &stationaryHigherParam,
       const std::pair<RealNum, RealNum> &stationaryRange,
-      const CritsAndValues &stationaryCritsAndValues,
+      const CritsAndValues<5> &stationaryCritsAndValues,
       const ResultHolder &result) const override {
     struct LocalFunctions {
       static bool
@@ -530,7 +532,7 @@ public:
   RotateValueCalculation(const Point2D &fulcrum, bool clockwise)
       : fulcrum(fulcrum), clockwise(clockwise) {}
 
-  CritsAndValues
+  CritsAndValues<5>
   getMagnitudeCritsAndValues(const BezierCurveQ &input) const override {
     return input.getDistanceCritsAndValues(fulcrum);
   }
@@ -557,9 +559,9 @@ public:
    * */
   bool isEdgeIntersectionDirectionChangeRelevant(
       const BezierCurveQ &edgeBefore,
-      const CritsAndValues &edgeBeforeCritsAndValues,
+      const CritsAndValues<5> &edgeBeforeCritsAndValues,
       const BezierCurveQ &edgeAfter,
-      const CritsAndValues &edgeAfterCritsAndValues) const override {
+      const CritsAndValues<5> &edgeAfterCritsAndValues) const override {
     RealNum placeholder1, placeholder2;
     bool placeholder3, placeholder4;
     return edgeBefore.curveIntersectionBlocksRotate(
@@ -587,8 +589,8 @@ public:
     return result;
   }
 
-  std::vector<RealNum> sameMagnitude(const BezierCurveQ &edge,
-                                     const Point2D &target) const override {
+  StaticVector<RealNum, 4> sameMagnitude(const BezierCurveQ &edge,
+                                         const Point2D &target) const override {
     return edge.getCurveDistanceParams(fulcrum, target.distanceFrom(fulcrum), 0,
                                        1);
   }
@@ -638,11 +640,11 @@ public:
       const BezierCurveQ &moving, const RealNum &movingLowerParam,
       const RealNum &movingHigherParam,
       const std::pair<RealNum, RealNum> &movingRange,
-      const CritsAndValues &movingCritsAndValues,
+      const CritsAndValues<5> &movingCritsAndValues,
       const BezierCurveQ &stationary, const RealNum &stationaryLowerParam,
       const RealNum &stationaryHigherParam,
       const std::pair<RealNum, RealNum> &stationaryRange,
-      const CritsAndValues &stationaryCritsAndValues,
+      const CritsAndValues<5> &stationaryCritsAndValues,
       const ResultHolder &result) const override {
     (void)movingCritsAndValues;
     (void)
@@ -952,7 +954,7 @@ public:
      * does not cross the rotation fulcrum.  Since the logic making use of this
      * divides the curve by distance crits, this requirement is satisfied.
      * */
-    std::vector<BezierCurveQ::CWAngleInterval> intervalFirstSet,
+    StaticVector<BezierCurveQ::CWAngleInterval, 4> intervalFirstSet,
         intervalSecondSet;
     edge.getCWAngleIntervals(fulcrum, intervalFirstSet, intervalSecondSet);
     RealNum startAngle = std::numeric_limits<RealNum>::quiet_NaN();
@@ -1055,7 +1057,7 @@ struct CritInterval {
 std::vector<CritInterval>
 getCritIntervals(const std::vector<BezierCurveQ> &edges,
                  const ValueCalculation &vc, const bool reverseRelevance,
-                 std::unordered_map<const BezierCurveQ *, CritsAndValues>
+                 std::unordered_map<const BezierCurveQ *, CritsAndValues<5>>
                      &outputEdgeCritsAndValues) {
   struct LocalFunctions {
     static bool sameMagnitudes(
@@ -1080,11 +1082,11 @@ getCritIntervals(const std::vector<BezierCurveQ> &edges,
                 // intervals.
     outputEdgeCritsAndValues.insert(
         {&currentEdge, vc.getMagnitudeCritsAndValues(currentEdge)});
-    const CritsAndValues *const currentCritsAndValues =
+    const CritsAndValues<5> *const currentCritsAndValues =
         &(outputEdgeCritsAndValues[&currentEdge]);
-    for (std::vector<std::pair<RealNum, RealNum>>::const_iterator currentCrit =
-             currentCritsAndValues->critsAndValues.cbegin() + 1;
-         currentCrit != currentCritsAndValues->critsAndValues.cend();
+    for (typename StaticVector<std::pair<RealNum, RealNum>, 5>::const_iterator
+             currentCrit = currentCritsAndValues->critsAndValues.begin() + 1;
+         currentCrit != currentCritsAndValues->critsAndValues.end();
          currentCrit++) {
       const CritInterval::CritIntervalEdgeEntry newEntry(
           {&currentEdge, (currentCrit - 1)->first, currentCrit->first,
@@ -1157,17 +1159,17 @@ getCritIntervals(const std::vector<BezierCurveQ> &edges,
             *(previousInterval->edges.back().edge),
             previousInterval->edges.back().endParam);
       } else {
-        const CritsAndValues *const previousEdgeCrits =
+        const CritsAndValues<5> *const previousEdgeCrits =
             &(outputEdgeCritsAndValues[previousInterval->edges.back().edge]);
-        const CritsAndValues *const currentEdgeCrits =
+        const CritsAndValues<5> *const currentEdgeCrits =
             &(outputEdgeCritsAndValues[maxMagnitude->edges.front().edge]);
         const RealNum previousClosestCritMagnitude =
-            (previousEdgeCrits->critsAndValues.cend() - 2)->second;
+            (previousEdgeCrits->critsAndValues.end() - 2)->second;
         const bool previousParallel =
             sufficientlyClose(previousEdgeCrits->critsAndValues.back().second,
                               previousClosestCritMagnitude);
         const RealNum currentClosestCritMagnitude =
-            (currentEdgeCrits->critsAndValues.cbegin() + 1)->second;
+            (currentEdgeCrits->critsAndValues.begin() + 1)->second;
         const bool currentParallel =
             sufficientlyClose(currentEdgeCrits->critsAndValues.front().second,
                               currentClosestCritMagnitude);
@@ -1339,7 +1341,7 @@ void moveAgainst(const ValueCalculation &vc, const Shape &moving,
   };
   struct LocalFunctions {
     static MagnitudeRange
-    getMagnitudeRange(const CritsAndValues &critsAndvalues,
+    getMagnitudeRange(const CritsAndValues<5> &critsAndvalues,
                       const RealNum &minParam, const RealNum &maxParam) {
       MagnitudeRange result({std::numeric_limits<RealNum>::quiet_NaN(),
                              std::numeric_limits<RealNum>::quiet_NaN(),
@@ -1518,7 +1520,7 @@ void moveAgainst(const ValueCalculation &vc, const Shape &moving,
 
     static bool edgeMostlyInsideMagnitudeRange(
         const CritInterval::CritIntervalEdgeEntry &shape1Edge,
-        const std::unordered_map<const BezierCurveQ *, CritsAndValues>
+        const std::unordered_map<const BezierCurveQ *, CritsAndValues<5>>
             &shape1CritsAndValues,
         const RealNum &targetMagnitude, const bool lowerMagnitudeIsInside) {
       const MagnitudeRange magnitudeRange(
@@ -1535,13 +1537,13 @@ void moveAgainst(const ValueCalculation &vc, const Shape &moving,
         const MagnitudeRange &highMagnitudeRange,
         const CritInterval &highMagnitudeInterval,
         const CritInterval::CritIntervalEdgeEntry &currentHighMagnitudeEdge,
-        const std::unordered_map<const BezierCurveQ *, CritsAndValues>
+        const std::unordered_map<const BezierCurveQ *, CritsAndValues<5>>
             &highMagnitudeEdgeCritsAndValues,
         const std::vector<CritInterval> &highMagnitudeIntervals,
         const MagnitudeRange &lowMagnitudeRange,
         const CritInterval &lowMagnitudeInterval,
         const CritInterval::CritIntervalEdgeEntry &currentLowMagnitudeEdge,
-        const std::unordered_map<const BezierCurveQ *, CritsAndValues>
+        const std::unordered_map<const BezierCurveQ *, CritsAndValues<5>>
             &lowMagnitudeEdgeCritsAndValues,
         const std::vector<CritInterval> &lowMagnitudeIntervals) {
       return
@@ -1593,11 +1595,11 @@ void moveAgainst(const ValueCalculation &vc, const Shape &moving,
   /********************************************************************************************************************/
   outputMovingEdge = nullptr;
   outputStationaryEdge = nullptr;
-  std::unordered_map<const BezierCurveQ *, CritsAndValues>
+  std::unordered_map<const BezierCurveQ *, CritsAndValues<5>>
       movingEdgeCritsAndValues;
   const std::vector<CritInterval> movingIntervals(
       getCritIntervals(moving.getEdges(), vc, false, movingEdgeCritsAndValues));
-  std::unordered_map<const BezierCurveQ *, CritsAndValues>
+  std::unordered_map<const BezierCurveQ *, CritsAndValues<5>>
       stationaryEdgeCritsAndValues;
   const std::vector<CritInterval> stationaryIntervals(getCritIntervals(
       stationary.getEdges(), vc, true, stationaryEdgeCritsAndValues));
@@ -2026,7 +2028,7 @@ std::vector<Shape::ShapeOverlap> Shape::getOverlap(const Shape &input)
         } else {
           inputNextEdge = inputFirstEdge;
         }
-        std::vector<std::pair<RealNum, RealNum>> myIntersectionParams(
+        StaticVector<std::pair<RealNum, RealNum>, 4> myIntersectionParams(
             myCurrentEdge->pointsOfIntersection(*inputCurrentEdge));
         if (BezierCurveQ::isIntersectionInfinite(
                 myIntersectionParams)) { // Special case: a parallel pair of
@@ -2058,7 +2060,7 @@ std::vector<Shape::ShapeOverlap> Shape::getOverlap(const Shape &input)
                                         0, *inputNextEdge, 0));
           }
         } else if (myIntersectionParams.size() > 0) {
-          for (std::vector<std::pair<RealNum, RealNum>>::iterator
+          for (typename StaticVector<std::pair<RealNum, RealNum>, 4>::iterator
                    myCurrentParam = myIntersectionParams.begin();
                myCurrentParam != myIntersectionParams.end(); myCurrentParam++) {
             Point2D intersectionPoint(
@@ -2076,7 +2078,7 @@ std::vector<Shape::ShapeOverlap> Shape::getOverlap(const Shape &input)
                        // shape's edges intersect each other at the
                        // intersection of a shape's edges.
             if (nearEnd(*myCurrentEdge, intersectionPoint)) {
-              std::vector<std::pair<RealNum, RealNum>> myNextIntersection(
+              StaticVector<std::pair<RealNum, RealNum>, 4> myNextIntersection(
                   myNextEdge->pointsOfIntersection(*inputCurrentEdge));
               if (!BezierCurveQ::isIntersectionInfinite(myNextIntersection) &&
                   myNextIntersection.size() > 0 &&
@@ -2103,8 +2105,9 @@ std::vector<Shape::ShapeOverlap> Shape::getOverlap(const Shape &input)
                 break;
               }
             } else if (nearStart(*myCurrentEdge, intersectionPoint)) {
-              std::vector<std::pair<RealNum, RealNum>> myPreviousIntersection(
-                  myPreviousEdge->pointsOfIntersection(*inputCurrentEdge));
+              StaticVector<std::pair<RealNum, RealNum>, 4>
+                  myPreviousIntersection(
+                      myPreviousEdge->pointsOfIntersection(*inputCurrentEdge));
               if (!BezierCurveQ::isIntersectionInfinite(
                       myPreviousIntersection) &&
                   myPreviousIntersection.size() > 0 &&
@@ -2126,8 +2129,9 @@ std::vector<Shape::ShapeOverlap> Shape::getOverlap(const Shape &input)
               }
             }
             if (nearEnd(*inputCurrentEdge, intersectionPoint)) {
-              std::vector<std::pair<RealNum, RealNum>> inputNextIntersection(
-                  inputNextEdge->pointsOfIntersection(*myCurrentEdge));
+              StaticVector<std::pair<RealNum, RealNum>, 4>
+                  inputNextIntersection(
+                      inputNextEdge->pointsOfIntersection(*myCurrentEdge));
               if (!BezierCurveQ::isIntersectionInfinite(
                       inputNextIntersection) &&
                   inputNextIntersection.size() > 0 &&
@@ -2154,7 +2158,7 @@ std::vector<Shape::ShapeOverlap> Shape::getOverlap(const Shape &input)
                 break;
               }
             } else if (nearStart(*inputCurrentEdge, intersectionPoint)) {
-              std::vector<std::pair<RealNum, RealNum>>
+              StaticVector<std::pair<RealNum, RealNum>, 4>
                   inputPreviousIntersection(
                       inputPreviousEdge->pointsOfIntersection(*myCurrentEdge));
               if (!BezierCurveQ::isIntersectionInfinite(
@@ -2310,14 +2314,14 @@ int Shape::pointInPolygon(const Point2D &testPoint)
     int intersectionCount = 0;
     for (std::vector<BezierCurveQ>::const_iterator currentEdge = edges.begin();
          currentEdge != edges.end(); currentEdge++) {
-      std::vector<std::pair<RealNum, RealNum>> result(
+      StaticVector<std::pair<RealNum, RealNum>, 4> result(
           currentEdge->pointsOfIntersection(currentTestLine));
       if (BezierCurveQ::isIntersectionInfinite(result)) {
         testValid = false;
         break;
       }
-      for (std::vector<std::pair<RealNum, RealNum>>::iterator currentParam =
-               result.begin();
+      for (typename StaticVector<std::pair<RealNum, RealNum>, 4>::iterator
+               currentParam = result.begin();
            currentParam != result.end(); currentParam++) {
         Point2D currentPoint(currentEdge->valueAt(currentParam->first));
         if (currentPoint == testPoint) {
@@ -2644,9 +2648,9 @@ bool Shape::crossesAtIntersection(
       BezierCurveQ::longStraightLine(intPoint, testPointS2E1));
   BezierCurveQ testLineS2E2(
       BezierCurveQ::longStraightLine(intPoint, testPointS2E2));
-  std::vector<std::pair<RealNum, RealNum>> intS2E1(
+  StaticVector<std::pair<RealNum, RealNum>, 4> intS2E1(
       testLine.pointsOfIntersection(testLineS2E1));
-  std::vector<std::pair<RealNum, RealNum>> intS2E2(
+  StaticVector<std::pair<RealNum, RealNum>, 4> intS2E2(
       testLine.pointsOfIntersection(testLineS2E2));
   return (intS2E1.size() > 0) != (intS2E2.size() > 0);
   /*
@@ -2658,12 +2662,12 @@ bool Shape::crossesAtIntersection(
 RealNum Shape::getTestParam(const BezierCurveQ &testCurve,
                             const RealNum &testCurveParam, bool goingTowards,
                             const BezierCurveQ &input) {
-  std::vector<std::pair<RealNum, RealNum>> intersections(
+  StaticVector<std::pair<RealNum, RealNum>, 4> intersections(
       testCurve.pointsOfIntersection(input));
   if (intersections.size() > 0) {
     Point2D testCurvePoint(testCurve.valueAt(testCurveParam));
-    std::vector<std::pair<RealNum, RealNum>>::iterator currentParam =
-        intersections.begin();
+    typename StaticVector<std::pair<RealNum, RealNum>, 4>::iterator
+        currentParam = intersections.begin();
     if (goingTowards) {
       while (currentParam != intersections.end() &&
              currentParam->first < testCurveParam &&
@@ -2863,7 +2867,7 @@ RealNum Shape::shiftAgainstAfterShifting(
                                                                      : -1;
   }();
   if (testScenario != 0 && !sufficientlySmall(inputShiftDistance)) {
-    std::unordered_map<const BezierCurveQ *, CritsAndValues> placeholder;
+    std::unordered_map<const BezierCurveQ *, CritsAndValues<5>> placeholder;
     for (const CritInterval &currentInterval :
          getCritIntervals(inputBeforeMove.getEdges(),
                           ShiftValueCalculation(inputShiftSlope,
@@ -2932,13 +2936,13 @@ RealNum Shape::shiftAgainstAfterRotating(
   if (!sufficientlySmall(inputRotationAngle)) {
     const Point2D inputRotationFulcrumPV(inputRotationFulcrum.getX(),
                                          inputRotationFulcrum.getY() + 100.0);
-    std::unordered_map<const BezierCurveQ *, CritsAndValues>
+    std::unordered_map<const BezierCurveQ *, CritsAndValues<5>>
         myEdgeCritsAndValues;
     const std::vector<CritInterval> myCritIntervals(getCritIntervals(
         getEdges(),
         ShiftValueCalculation(myShiftSlope, myShiftRight, myShiftUp), false,
         myEdgeCritsAndValues));
-    std::unordered_map<const BezierCurveQ *, CritsAndValues> placeholder;
+    std::unordered_map<const BezierCurveQ *, CritsAndValues<5>> placeholder;
     for (const CritInterval &inputCurrentInterval :
          getCritIntervals(inputBeforeMove.getEdges(),
                           RotateValueCalculation(inputRotationFulcrum,
@@ -2958,22 +2962,22 @@ RealNum Shape::shiftAgainstAfterRotating(
         const CircleArc currentArc(getArcForPointRotation(
             inputRotationFulcrum, currentIntervalEndpoint, inputRotationAngle,
             inputRotationClockwise));
-        const CritsAndValues currentArcCrits(
+        const CritsAndValues<4> currentArcCrits(
             currentArc.getPerpendicularMagnitudeCritsAndValues(myShiftSlope));
         const auto currentArcPerpMagRange = std::minmax_element(
-            currentArcCrits.critsAndValues.cbegin(),
-            currentArcCrits.critsAndValues.cend(), compareSecond);
+            currentArcCrits.critsAndValues.begin(),
+            currentArcCrits.critsAndValues.end(), compareSecond);
         for (const CritInterval &myCritInterval : myCritIntervals) {
           if (!myCritInterval.relevant) {
             continue;
           }
           for (const CritInterval::CritIntervalEdgeEntry &myCurrentEdge :
                myCritInterval.edges) {
-            const CritsAndValues *const currentEdgeCrits =
+            const CritsAndValues<5> *const currentEdgeCrits =
                 &(myEdgeCritsAndValues[myCurrentEdge.edge]);
             const auto currentEdgePerpMagRange = std::minmax_element(
-                currentEdgeCrits->critsAndValues.cbegin(),
-                currentEdgeCrits->critsAndValues.cend(), compareSecond);
+                currentEdgeCrits->critsAndValues.begin(),
+                currentEdgeCrits->critsAndValues.end(), compareSecond);
             if (currentArcPerpMagRange.first->second >
                     currentEdgePerpMagRange.second->second ||
                 sufficientlyClose(currentArcPerpMagRange.first->second,
@@ -3027,7 +3031,7 @@ RealNum Shape::rotateAgainstAfterShifting(
                  origin.shift(100, perpSlope, true, true), inputShiftSlope) >
              Point2D::getPerpendicularMagnitude(origin, inputShiftSlope);
     }();
-    std::unordered_map<const BezierCurveQ *, CritsAndValues> placeholder;
+    std::unordered_map<const BezierCurveQ *, CritsAndValues<5>> placeholder;
     for (const CritInterval &inputCurrentInterval :
          getCritIntervals(inputBeforeMove.getEdges(),
                           ShiftValueCalculation(inputShiftSlope,
@@ -3109,13 +3113,13 @@ RealNum Shape::rotateAgainstAfterRotating(const Shape &inputBeforeMove,
   if (!sufficientlySmall(inputRotationAngle)) {
     const Point2D inputRotationFulcrumPV(inputRotationFulcrum.getX(),
                                          inputRotationFulcrum.getY() + 100.0);
-    std::unordered_map<const BezierCurveQ *, CritsAndValues>
+    std::unordered_map<const BezierCurveQ *, CritsAndValues<5>>
         myEdgeCritsAndValues;
     const std::vector<CritInterval> myCritIntervals(getCritIntervals(
         getEdges(),
         RotateValueCalculation(myRotationFulcrum, myRotationClockwise), false,
         myEdgeCritsAndValues));
-    std::unordered_map<const BezierCurveQ *, CritsAndValues> placeholder;
+    std::unordered_map<const BezierCurveQ *, CritsAndValues<5>> placeholder;
     for (const CritInterval &inputCurrentInterval :
          getCritIntervals(inputBeforeMove.getEdges(),
                           RotateValueCalculation(inputRotationFulcrum,
@@ -3135,22 +3139,22 @@ RealNum Shape::rotateAgainstAfterRotating(const Shape &inputBeforeMove,
         const CircleArc currentArc(
             getArcForPointRotation(inputRotationFulcrum, currentStreakEndpoint,
                                    inputRotationAngle, inputRotationClockwise));
-        const CritsAndValues currentArcCrits(
+        const CritsAndValues<4> currentArcCrits(
             currentArc.getDistanceCritsAndValues(myRotationFulcrum));
         const auto currentArcDistanceRange = std::minmax_element(
-            currentArcCrits.critsAndValues.cbegin(),
-            currentArcCrits.critsAndValues.cend(), compareSecond);
+            currentArcCrits.critsAndValues.begin(),
+            currentArcCrits.critsAndValues.end(), compareSecond);
         for (const CritInterval &myCritInterval : myCritIntervals) {
           if (!myCritInterval.relevant) {
             continue;
           }
           for (const CritInterval::CritIntervalEdgeEntry &myCurrentEdge :
                myCritInterval.edges) {
-            const CritsAndValues *const currentEdgeCrits =
+            const CritsAndValues<5> *const currentEdgeCrits =
                 &(myEdgeCritsAndValues[myCurrentEdge.edge]);
             const auto currentEdgeDistanceRange = std::minmax_element(
-                currentEdgeCrits->critsAndValues.cbegin(),
-                currentEdgeCrits->critsAndValues.cend(), compareSecond);
+                currentEdgeCrits->critsAndValues.begin(),
+                currentEdgeCrits->critsAndValues.end(), compareSecond);
             if (currentArcDistanceRange.first->second >
                     currentEdgeDistanceRange.second->second ||
                 sufficientlyClose(currentArcDistanceRange.first->second,
@@ -3195,14 +3199,6 @@ std::string Shape::toString() const {
     output += (output.length() > 0 ? ", " : "") + current.toString();
   }
   return output;
-}
-
-Shape Shape::approximateCircle(const Point2D &centre, const RealNum &radius,
-                               int edges) {
-  std::pair<std::vector<Point2D>, std::vector<Point2D>> circleArcPoints(
-      BezierCurveQ::circleArc(centre, radius, 0, 360, edges));
-  circleArcPoints.first.pop_back();
-  return Shape(circleArcPoints.first, circleArcPoints.second);
 }
 
 std::ostream &operator<<(std::ostream &os, const Shape &input) {

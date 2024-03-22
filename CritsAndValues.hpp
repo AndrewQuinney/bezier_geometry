@@ -1,15 +1,15 @@
 #ifndef CRITSANDVALUES_HPP
 #define CRITSANDVALUES_HPP
 
+#include "BezierGeometryGlobal.hpp"
+#include "StaticVector.hpp"
 #include <vector>
 
-#include "Point2D.hpp"
-
 namespace bezier_geometry {
-struct CritsAndValues {
+template <std::size_t MAX_SIZE> struct CritsAndValues {
   bool startIsCrit;
   bool endIsCrit;
-  std::vector<std::pair<RealNum, RealNum>> critsAndValues;
+  StaticVector<std::pair<RealNum, RealNum>, MAX_SIZE> critsAndValues;
 };
 } // namespace bezier_geometry
 

@@ -2960,8 +2960,10 @@ void rotateTest() {
                                result.movingEdgeResult.angle *
                                    (currentEntry.clockwise ? (-1.0) : 1.0))
                       .pointsOfIntersection(*result.stationaryEdge)
-                : std::vector<std::pair<bezier_geometry::RealNum,
-                                        bezier_geometry::RealNum>>())
+                : bezier_geometry::StaticVector<
+                      std::pair<bezier_geometry::RealNum,
+                                bezier_geometry::RealNum>,
+                      4>())
         << std::endl;
     CHECK(bezier_geometry::sufficientlyClose(result.movingEdgeResult.angle,
                                              currentEntry.expectedAngle),

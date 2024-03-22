@@ -8,6 +8,7 @@
 #include "PolynomialFunction.hpp"
 
 namespace bezier_geometry {
+
 class BezierCurveQ {
 public:
   struct ShiftAgainstResult {
@@ -63,7 +64,7 @@ public:
                      bool clockwise, RotateAgainstResult &output) const;
   void shiftAgainst(const BezierCurveQ &input, const RealNum &slope, bool right,
                     bool up, ShiftAgainstResult &output) const;
-  std::vector<std::pair<RealNum, RealNum>>
+  StaticVector<std::pair<RealNum, RealNum>, 4>
   pointsOfIntersection(const BezierCurveQ &input) const;
   const Point2D &getControl() const;
   Point2D valueAt(const RealNum &parameter) const;
@@ -73,11 +74,11 @@ public:
                                          const Point2D &myPoint,
                                          const Point2D &myStart,
                                          const RealNum &myRate) const;
-  CritsAndValues getDistanceCritsAndValues(const Point2D &input) const;
+  CritsAndValues<5> getDistanceCritsAndValues(const Point2D &input) const;
   Point2D getDirectionIndicator(const RealNum &parameter) const;
   RealNum getConcavitySlope(const RealNum &parameter) const;
   Point2D getConcavityIndicator(const RealNum &parameter) const;
-  CritsAndValues
+  CritsAndValues<3>
   getPerpendicularMagnitudeCritsAndValues(const RealNum &slope) const;
   void getCWAngleRangeWithPositiveVertical(const Point2D &fulcrum,
                                            RealNum &outputStart1,
@@ -104,24 +105,25 @@ public:
                                     bool &outputAtMyCrit,
                                     bool &outputAtInputCrit) const;
   bool curveIntersectionBlocksRotate(
-      const RealNum &myParam, const CritsAndValues &myDistanceCrits,
+      const RealNum &myParam, const CritsAndValues<5> &myDistanceCrits,
       const BezierCurveQ &input, const RealNum &inputParam,
-      const CritsAndValues &inputDistanceCrits, const Point2D &fulcrum,
+      const CritsAndValues<5> &inputDistanceCrits, const Point2D &fulcrum,
       const bool clockwise, RealNum &outputBlockedCWVerticalAngleStart,
       RealNum &outputBlockedCWVerticalAngleEnd, bool &outputAtMyCrit,
       bool &outputAtInputCrit) const;
   RealNum getDistanceConcavity(const RealNum &param,
                                const Point2D &fulcrum) const;
-  std::vector<RealNum> pointShiftAgainstParams(const Point2D &input,
-                                               const RealNum &slope,
-                                               bool skipIntersections) const;
-  std::vector<RealNum> getCurveDistanceParams(const Point2D &fulcrum,
-                                              const RealNum &distance,
-                                              const RealNum &startParam,
-                                              const RealNum &endParam) const;
-  void getCWAngleIntervals(const Point2D &fulcrum,
-                           std::vector<CWAngleInterval> &outputFirstSet,
-                           std::vector<CWAngleInterval> &outputSecondSet) const;
+  StaticVector<RealNum, 2>
+  pointShiftAgainstParams(const Point2D &input, const RealNum &slope,
+                          bool skipIntersections) const;
+  StaticVector<RealNum, 4>
+  getCurveDistanceParams(const Point2D &fulcrum, const RealNum &distance,
+                         const RealNum &startParam,
+                         const RealNum &endParam) const;
+  void
+  getCWAngleIntervals(const Point2D &fulcrum,
+                      StaticVector<CWAngleInterval, 4> &outputFirstSet,
+                      StaticVector<CWAngleInterval, 4> &outputSecondSet) const;
   bool sufficientlyCloseAlongCurve(const RealNum &curveParam,
                                    const RealNum &testParam) const;
   RealNum paramForPoint(const Point2D &input) const;
@@ -132,11 +134,75 @@ public:
                                        const Point2D &point);
   static BezierCurveQ straightLine(const Point2D &s, const Point2D &e);
   static bool isIntersectionInfinite(
-      const std::vector<std::pair<RealNum, RealNum>> &intersection);
-  static std::pair<std::vector<Point2D>, std::vector<Point2D>>
+      const StaticVector<std::pair<RealNum, RealNum>, 4> &intersection);
+
+  template <std::size_t EDGES>
+  static typename std::enable_if<(EDGES == 1)>::type
+  validateAngle(const RealNum &cwAngleSize) {
+    if (cwAngleSize > 180 || sufficientlyClose(cwAngleSize, 180)) {
+      throw std::string("Angle sizes greater than or equal to 180 degrees "
+                        "require at least 2 edges.");
+    }
+  }
+
+  template <std::size_t EDGES>
+  static typename std::enable_if<(EDGES == 2)>::type
+  validateAngle(const RealNum &cwAngleSize) {
+    if (sufficientlyClose(cwAngleSize, 360)) {
+      throw std::string("Full circles require at least 3 edges.");
+    }
+  }
+
+  template <std::size_t EDGES>
+  static typename std::enable_if<(EDGES > 2)>::type
+  validateAngle(const RealNum &cwAngleSize) {}
+
+  /*
+   * The first entry in the returned result are the endpoints, the second entry
+   * are the control points.
+   *
+   * The first entry always has one more entry than the second, since it also
+   * encapsulates the end of the last edge.
+   * */
+  template <std::size_t EDGES>
+  static typename std::enable_if<(EDGES > 1),
+                                 std::pair<StaticVector<Point2D, EDGES + 1>,
+                                           StaticVector<Point2D, EDGES>>>::type
   circleArc(const Point2D &fulcrum, const RealNum &radius,
             const RealNum &startCWPositiveVerticalAngle,
-            const RealNum &cwAngleSize, int edges);
+            const RealNum &cwAngleSize) {
+    if (cwAngleSize <= 0 || cwAngleSize > 360) {
+      throw std::string("Invalid arc angle size: ") +
+          std::to_string(cwAngleSize);
+    }
+    validateAngle<EDGES>(cwAngleSize);
+    const RealNum angleIncrement = (-1.0) * cwAngleSize / RealNum(EDGES);
+    Point2D currentControl;
+    {
+      Point2D startPoint(fulcrum.shift(radius, 0, true, true));
+      Point2D endPoint(startPoint.rotate(fulcrum, angleIncrement));
+      RealNum endTangentSlope =
+          (-1.0) / Point2D::getSlopeBetween(endPoint, fulcrum);
+      currentControl =
+          Point2D(startPoint.getX(),
+                  endPoint.getY() +
+                      (endTangentSlope * (startPoint.getX() - endPoint.getX())))
+              .rotate(fulcrum, 90 - startCWPositiveVerticalAngle);
+    }
+    Point2D currentEndpoint =
+        Point2D(fulcrum.getX(), fulcrum.getY() + radius)
+            .rotate(fulcrum, (-1.0) * startCWPositiveVerticalAngle);
+    std::pair<StaticVector<Point2D, EDGES + 1>, StaticVector<Point2D, EDGES>>
+        result;
+    for (int i = 0; i < EDGES; i++) {
+      result.first.push_back(currentEndpoint);
+      currentEndpoint = currentEndpoint.rotate(fulcrum, angleIncrement);
+      result.second.push_back(currentControl);
+      currentControl = currentControl.rotate(fulcrum, angleIncrement);
+    }
+    result.first.push_back(currentEndpoint);
+    return result;
+  }
 
 private:
   RealNum maxX;
@@ -153,7 +219,8 @@ private:
   PolynomialFunction<3>
       paraFormY; // The parametric form of this curve for the y-coordinate.
 
-  static const std::vector<std::pair<RealNum, RealNum>> INFINITE_INTERSECTION;
+  static const StaticVector<std::pair<RealNum, RealNum>, 4>
+      INFINITE_INTERSECTION;
 
   RealNum minMaxDistance(const Point2D &input, bool max,
                          const RealNum &minParam,
@@ -181,8 +248,8 @@ private:
   bool movesTowardsFromEndpoint(bool atStart, const RealNum &slope, bool right,
                                 bool up) const;
   void endpointRotationConditions(
-      const CritsAndValues &myDistanceCrits, const BezierCurveQ &input,
-      const CritsAndValues &inputDistanceCrits, const Point2D &fulcrum,
+      const CritsAndValues<5> &myDistanceCrits, const BezierCurveQ &input,
+      const CritsAndValues<5> &inputDistanceCrits, const Point2D &fulcrum,
       bool clockwise, BezierCurveQ::RotateAgainstResult &output) const;
   BezierCurveQ getTestCircleArc(const RealNum &parameter,
                                 const Point2D &circleFulcrum) const;
@@ -202,10 +269,6 @@ private:
 };
 
 std::ostream &operator<<(std::ostream &os, const BezierCurveQ &input);
-std::ostream &operator<<(std::ostream &os,
-                         const std::vector<std::pair<RealNum, RealNum>> &input);
-template <typename T>
-std::ostream &operator<<(std::ostream &os, const std::vector<T> &input);
 } // namespace bezier_geometry
 
 #endif

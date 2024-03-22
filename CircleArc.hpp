@@ -21,9 +21,9 @@ public:
   CircleArc shift(const RealNum &distance, const RealNum &slope, bool right,
                   bool up) const;
   Point2D valueAt(const RealNum &parameter) const;
-  CritsAndValues
+  CritsAndValues<4>
   getPerpendicularMagnitudeCritsAndValues(const RealNum &slope) const;
-  CritsAndValues getDistanceCritsAndValues(const Point2D &fulcrum) const;
+  CritsAndValues<4> getDistanceCritsAndValues(const Point2D &fulcrum) const;
 
 private:
   const Point2D circleFulcrum;
@@ -35,8 +35,8 @@ private:
 
   RealNum getParamForPoint(const Point2D &input) const;
   template <typename T>
-  CritsAndValues getCritsAndValues(const RealNum &slope,
-                                   const T &valueCalc) const;
+  CritsAndValues<4> getCritsAndValues(const RealNum &slope,
+                                      const T &valueCalc) const;
 };
 } // namespace bezier_geometry
 

@@ -312,48 +312,48 @@ void infiniteIntersectionBlockedInterval(
   }
 }
 
-template <typename T>
+template <typename T, std::size_t MAX_SIZE>
 bool getCritPosition(
     const RealNum &param, const T &valueCalculator,
-    const CritsAndValues &critsAndValues,
-    std::vector<std::pair<RealNum, RealNum>>::const_iterator &outputPosition,
-    std::vector<std::pair<RealNum, RealNum>>::const_iterator
+    const CritsAndValues<MAX_SIZE> &critsAndValues,
+    typename StaticVector<std::pair<RealNum, RealNum>, MAX_SIZE>::const_iterator
+        &outputPosition,
+    typename StaticVector<std::pair<RealNum, RealNum>, MAX_SIZE>::const_iterator
         &outputOtherPosition1,
-    std::vector<std::pair<RealNum, RealNum>>::const_iterator
+    typename StaticVector<std::pair<RealNum, RealNum>, MAX_SIZE>::const_iterator
         &outputOtherPosition2) {
   outputPosition =
-      std::lower_bound(critsAndValues.critsAndValues.cbegin(),
-                       critsAndValues.critsAndValues.cend(),
+      std::lower_bound(critsAndValues.critsAndValues.begin(),
+                       critsAndValues.critsAndValues.end(),
                        std::pair<RealNum, RealNum>(
                            param, std::numeric_limits<RealNum>::lowest()));
-  std::vector<std::pair<RealNum, RealNum>>::const_iterator testPosition =
-      outputPosition;
+  typename StaticVector<std::pair<RealNum, RealNum>, MAX_SIZE>::const_iterator
+      testPosition = outputPosition;
   if (outputPosition !=
           critsAndValues.critsAndValues
-              .cbegin() // The only way this does NOT occur is when param is 0.
+              .begin() // The only way this does NOT occur is when param is 0.
       && std::abs(param - (outputPosition - 1)->first) <
              std::abs(param - outputPosition->first)) {
     testPosition = (outputPosition - 1);
   }
   if (valueCalculator.paramMatches(testPosition->first, param) &&
-      (testPosition == critsAndValues.critsAndValues.cbegin()
+      (testPosition == critsAndValues.critsAndValues.begin()
            ? critsAndValues.startIsCrit ? valueCalculator.isRoCZero(param)
                                         : true
-       : testPosition == (critsAndValues.critsAndValues.cend() - 1)
+       : testPosition == (critsAndValues.critsAndValues.end() - 1)
            ? critsAndValues.endIsCrit ? valueCalculator.isRoCZero(param) : true
            : valueCalculator.isRoCZero(param))) {
     outputPosition = testPosition;
-    outputOtherPosition1 =
-        testPosition == critsAndValues.critsAndValues.cbegin()
-            ? (testPosition + 1)
-            : (testPosition - 1);
+    outputOtherPosition1 = testPosition == critsAndValues.critsAndValues.begin()
+                               ? (testPosition + 1)
+                               : (testPosition - 1);
     outputOtherPosition2 =
-        testPosition == (critsAndValues.critsAndValues.cend() - 1)
+        testPosition == (critsAndValues.critsAndValues.end() - 1)
             ? (testPosition - 1)
             : (testPosition + 1);
     return true;
   } else {
-    outputPosition = critsAndValues.critsAndValues.cend();
+    outputPosition = critsAndValues.critsAndValues.end();
     if (testPosition->first < param) {
       outputOtherPosition1 = testPosition;
       outputOtherPosition2 = testPosition + 1;
@@ -363,11 +363,11 @@ bool getCritPosition(
     } else { // This can happen if the input parameter is exactly 0 or 1 and
              // not a crit according to 'isRoCZero'.
       outputOtherPosition1 =
-          testPosition == critsAndValues.critsAndValues.cbegin()
+          testPosition == critsAndValues.critsAndValues.begin()
               ? testPosition
               : (testPosition - 1);
       outputOtherPosition2 =
-          testPosition == critsAndValues.critsAndValues.cbegin()
+          testPosition == critsAndValues.critsAndValues.begin()
               ? (testPosition + 1)
               : testPosition;
     }
@@ -444,9 +444,10 @@ bool movingOverlapMostlyAwayFromShift(const BezierCurveQ &moving,
       Point2D::getPerpendicularMagnitude(
           stationaryPoint.shift(100, slope, right, up), stationarySlope) >
       stationaryPointPerpMag;
-  const CritsAndValues movingTestCrits(
+  const CritsAndValues<3> movingTestCrits(
       moving.getPerpendicularMagnitudeCritsAndValues(stationarySlope));
-  std::vector<std::pair<RealNum, RealNum>>::const_iterator movingCritPosition,
+  typename StaticVector<std::pair<RealNum, RealNum>, 3>::const_iterator
+      movingCritPosition,
       movingOtherCritPosition1, movingOtherCritPosition2;
   debug() << "movingOverlapMostlyAwayFromShift -"
           << " moving: " << moving << " stationary: " << stationary
@@ -511,14 +512,16 @@ bool movingOverlapMostlyAwayFromShift(const BezierCurveQ &moving,
  * crits -crits - the curve's list of crit parameters and values, referenced by
  * critPosition and positionIsAtCrit
  */
-bool atRealCrit(const std::vector<std::pair<RealNum, RealNum>>::const_iterator
-                    &critPosition,
-                const bool positionIsAtCrit, const CritsAndValues &crits) {
+template <std::size_t MAX_SIZE>
+bool atRealCrit(
+    const typename StaticVector<std::pair<RealNum, RealNum>,
+                                MAX_SIZE>::const_iterator &critPosition,
+    const bool positionIsAtCrit, const CritsAndValues<MAX_SIZE> &crits) {
   if (!positionIsAtCrit) {
     return false;
-  } else if (critPosition == crits.critsAndValues.cbegin()) {
+  } else if (critPosition == crits.critsAndValues.begin()) {
     return crits.startIsCrit;
-  } else if (critPosition == (crits.critsAndValues.cend() - 1)) {
+  } else if (critPosition == (crits.critsAndValues.end() - 1)) {
     return crits.endIsCrit;
   } else {
     return true;
@@ -538,14 +541,14 @@ bool isFulcrumIntersection(const BezierCurveQ &curve1,
                            const BezierCurveQ &curve2,
                            const RealNum &curve1Param,
                            const RealNum &curve2Param,
-                           const CritsAndValues &curve1DistanceCrits,
-                           const CritsAndValues &curve2DistanceCrits) {
+                           const CritsAndValues<5> &curve1DistanceCrits,
+                           const CritsAndValues<5> &curve2DistanceCrits) {
   const auto curve1MinMaxDistanceCrits = std::minmax_element(
-      curve1DistanceCrits.critsAndValues.cbegin(),
-      curve1DistanceCrits.critsAndValues.cend(), compareSecond);
+      curve1DistanceCrits.critsAndValues.begin(),
+      curve1DistanceCrits.critsAndValues.end(), compareSecond);
   const auto curve2MinMaxDistanceCrits = std::minmax_element(
-      curve2DistanceCrits.critsAndValues.cbegin(),
-      curve2DistanceCrits.critsAndValues.cend(), compareSecond);
+      curve2DistanceCrits.critsAndValues.begin(),
+      curve2DistanceCrits.critsAndValues.end(), compareSecond);
   debug() << "isFulcrumIntersection -"
           << " curve1MinMaxDistanceCrits.first->second: "
           << std::to_string(curve1MinMaxDistanceCrits.first->second)
@@ -584,11 +587,11 @@ getOverlappingInterval(const BezierCurveQ &curve, const RealNum &curveParam,
       targetCurve.rateOfChangeAtParam(targetCurveParam);
   const RealNum targetCurvePerpMag = Point2D::getPerpendicularMagnitude(
       targetCurve.valueAt(targetCurveParam), targetCurveSlope);
-  const CritsAndValues curvePerpMagCrits(
+  const CritsAndValues<3> curvePerpMagCrits(
       curve.getPerpendicularMagnitudeCritsAndValues(targetCurveSlope));
-  for (std::vector<std::pair<RealNum, RealNum>>::const_iterator currentCrit =
-           curvePerpMagCrits.critsAndValues.cbegin() + 1;
-       currentCrit != curvePerpMagCrits.critsAndValues.cend(); currentCrit++) {
+  for (StaticVector<std::pair<RealNum, RealNum>, 3>::const_iterator
+           currentCrit = curvePerpMagCrits.critsAndValues.begin() + 1;
+       currentCrit != curvePerpMagCrits.critsAndValues.end(); currentCrit++) {
     if ((currentCrit - 1)->first <= curveParam &&
         currentCrit->first >= curveParam &&
         ((currentCrit - 1)->second < targetCurvePerpMag) ==
@@ -659,7 +662,7 @@ twoVarNewton(
 }
 } // namespace
 
-const std::vector<std::pair<RealNum, RealNum>>
+const StaticVector<std::pair<RealNum, RealNum>, 4>
     BezierCurveQ::INFINITE_INTERSECTION(
         {{std::numeric_limits<RealNum>::quiet_NaN(),
           std::numeric_limits<RealNum>::quiet_NaN()}});
@@ -987,7 +990,7 @@ bool BezierCurveQ::movesTowardsFromEndpoint(bool atStart, const RealNum &slope,
   return angleBetween < 90.0 || angleBetween > 270.0;
 }
 
-CritsAndValues BezierCurveQ::getPerpendicularMagnitudeCritsAndValues(
+CritsAndValues<3> BezierCurveQ::getPerpendicularMagnitudeCritsAndValues(
     const RealNum &slope) const {
   RealNum myCrit = -1;
   {
@@ -1006,7 +1009,7 @@ CritsAndValues BezierCurveQ::getPerpendicularMagnitudeCritsAndValues(
     }
   }
   {
-    CritsAndValues result;
+    CritsAndValues<3> result;
     result.critsAndValues.push_back(
         {0, Point2D::getPerpendicularMagnitude(valueAt(0), slope)});
     if (myCrit > 0.0 && myCrit < 1.0 && !straightLine()) {
@@ -1022,9 +1025,9 @@ CritsAndValues BezierCurveQ::getPerpendicularMagnitudeCritsAndValues(
 }
 
 bool BezierCurveQ::curveIntersectionBlocksRotate(
-    const RealNum &myParam, const CritsAndValues &myDistanceCrits,
+    const RealNum &myParam, const CritsAndValues<5> &myDistanceCrits,
     const BezierCurveQ &input, const RealNum &inputParam,
-    const CritsAndValues &inputDistanceCrits, const Point2D &fulcrum,
+    const CritsAndValues<5> &inputDistanceCrits, const Point2D &fulcrum,
     const bool clockwise, RealNum &outputBlockedCWVerticalAngleStart,
     RealNum &outputBlockedCWVerticalAngleEnd, bool &outputAtMyCrit,
     bool &outputAtInputCrit) const {
@@ -1089,7 +1092,8 @@ bool BezierCurveQ::curveIntersectionBlocksRotate(
       }
     }
   }
-  std::vector<std::pair<RealNum, RealNum>>::const_iterator myCritPosition,
+  typename StaticVector<std::pair<RealNum, RealNum>, 5>::const_iterator
+      myCritPosition,
       myOtherCritPosition1, myOtherCritPosition2, inputCritPosition,
       inputOtherCritPosition1, inputOtherCritPosition2;
   const RealNum tangentShiftSlope =
@@ -1216,10 +1220,10 @@ bool BezierCurveQ::curveIntersectionBlocksRotate(
       getRotationTangentSpeed(fulcrum, myParam);
   const RealNum inputRotationTangentSpeed =
       input.getRotationTangentSpeed(fulcrum, inputParam);
-  if ((myCritPosition == myDistanceCrits.critsAndValues.cbegin() ||
-       myCritPosition == (myDistanceCrits.critsAndValues.cend() - 1)) &&
-      (inputCritPosition == inputDistanceCrits.critsAndValues.cbegin() ||
-       inputCritPosition == (inputDistanceCrits.critsAndValues.cend() - 1))) {
+  if ((myCritPosition == myDistanceCrits.critsAndValues.begin() ||
+       myCritPosition == (myDistanceCrits.critsAndValues.end() - 1)) &&
+      (inputCritPosition == inputDistanceCrits.critsAndValues.begin() ||
+       inputCritPosition == (inputDistanceCrits.critsAndValues.end() - 1))) {
     debug()
         << "BezierCurveQ::curveIntersectionBlocksRotate - endpoint both curves."
         << std::endl;
@@ -1239,21 +1243,21 @@ bool BezierCurveQ::curveIntersectionBlocksRotate(
       } else {
         return clockwise == ((inputRotationTangentSpeed > 0) ==
                              (inputCritPosition ==
-                              inputDistanceCrits.critsAndValues.cbegin()));
+                              inputDistanceCrits.critsAndValues.begin()));
       }
     } else if (sufficientlyCloseSlopes(
                    inputDistanceSlope,
                    std::numeric_limits<RealNum>::infinity())) {
       return clockwise !=
              ((myRotationTangentSpeed > 0) ==
-              (myCritPosition == myDistanceCrits.critsAndValues.cbegin()));
+              (myCritPosition == myDistanceCrits.critsAndValues.begin()));
     } else {
       const bool myExtendingCW =
           (myRotationTangentSpeed > 0) ==
-          (myCritPosition == myDistanceCrits.critsAndValues.cbegin());
+          (myCritPosition == myDistanceCrits.critsAndValues.begin());
       if (myExtendingCW !=
           ((inputRotationTangentSpeed > 0) ==
-           (inputCritPosition == inputDistanceCrits.critsAndValues.cbegin()))) {
+           (inputCritPosition == inputDistanceCrits.critsAndValues.begin()))) {
         return clockwise != myExtendingCW;
       } else if (sufficientlyCloseSlopes(
                      myDistanceSlope,
@@ -1275,7 +1279,7 @@ bool BezierCurveQ::curveIntersectionBlocksRotate(
                 << " myExtendingCW: " << myExtendingCW << " inputExtendingCW: "
                 << ((inputRotationTangentSpeed > 0) ==
                     (inputCritPosition ==
-                     inputDistanceCrits.critsAndValues.cbegin()))
+                     inputDistanceCrits.critsAndValues.begin()))
                 << " myDistanceSlope: " << std::to_string(myDistanceSlope)
                 << " inputDistanceSlope: " << std::to_string(inputDistanceSlope)
                 << " myRotationTangentSpeed: "
@@ -1296,14 +1300,14 @@ bool BezierCurveQ::curveIntersectionBlocksRotate(
         return (myDistanceSlope > inputDistanceSlope) == clockwise;
       }
     }
-  } else if (myCritPosition == myDistanceCrits.critsAndValues.cbegin() ||
-             myCritPosition == (myDistanceCrits.critsAndValues.cend() - 1)) {
+  } else if (myCritPosition == myDistanceCrits.critsAndValues.begin() ||
+             myCritPosition == (myDistanceCrits.critsAndValues.end() - 1)) {
     debug() << "BezierCurveQ::curveIntersectionBlocksRotate - endpoint of my "
                "curve, not an endpoint of the input."
             << std::endl;
     const bool myExtendingInDirection =
         ((myRotationTangentSpeed > 0) ==
-         (myCritPosition == myDistanceCrits.critsAndValues.cbegin())) ==
+         (myCritPosition == myDistanceCrits.critsAndValues.begin())) ==
         clockwise;
     const RealNum myDistanceSlope =
         getDistanceSlope(fulcrum, myParam, myRotationTangentSpeed);
@@ -1333,15 +1337,15 @@ bool BezierCurveQ::curveIntersectionBlocksRotate(
     } else {
       return false;
     }
-  } else if (inputCritPosition == inputDistanceCrits.critsAndValues.cbegin() ||
+  } else if (inputCritPosition == inputDistanceCrits.critsAndValues.begin() ||
              inputCritPosition ==
-                 (inputDistanceCrits.critsAndValues.cend() - 1)) {
+                 (inputDistanceCrits.critsAndValues.end() - 1)) {
     debug() << "BezierCurveQ::curveIntersectionBlocksRotate - at input "
                "endpoint, not at my endpoint."
             << std::endl;
     const bool inputExtendingInDirection =
         ((inputRotationTangentSpeed > 0) ==
-         (inputCritPosition == inputDistanceCrits.critsAndValues.cbegin())) ==
+         (inputCritPosition == inputDistanceCrits.critsAndValues.begin())) ==
         clockwise;
     const RealNum inputDistanceSlope =
         input.getDistanceSlope(fulcrum, inputParam, inputRotationTangentSpeed);
@@ -1421,15 +1425,17 @@ bool BezierCurveQ::curveIntersectionBlocksShift(
   outputBlockedCWVerticalAngleEnd = -1;
   outputAtMyCrit = false;
   outputAtInputCrit = false;
-  CritsAndValues myPerpCrits(getPerpendicularMagnitudeCritsAndValues(slope));
-  std::vector<std::pair<RealNum, RealNum>>::const_iterator myCritPosition,
+  CritsAndValues<3> myPerpCrits(getPerpendicularMagnitudeCritsAndValues(slope));
+  typename StaticVector<std::pair<RealNum, RealNum>, 3>::const_iterator
+      myCritPosition,
       myOtherCritPosition1, myOtherCritPosition2;
   const bool atMyCrit = getCritPosition(
       myParam, PerpMagCritCalculator(*this, slope), myPerpCrits, myCritPosition,
       myOtherCritPosition1, myOtherCritPosition2);
-  CritsAndValues inputPerpCrits(
+  CritsAndValues<3> inputPerpCrits(
       input.getPerpendicularMagnitudeCritsAndValues(slope));
-  std::vector<std::pair<RealNum, RealNum>>::const_iterator inputCritPosition,
+  typename StaticVector<std::pair<RealNum, RealNum>, 3>::const_iterator
+      inputCritPosition,
       inputOtherCritPosition1, inputOtherCritPosition2;
   const bool atInputCrit = getCritPosition(
       inputParam, PerpMagCritCalculator(input, slope), inputPerpCrits,
@@ -1448,41 +1454,41 @@ bool BezierCurveQ::curveIntersectionBlocksShift(
   */
   if (atMyCrit &&
       ((myPerpCrits.startIsCrit &&
-        myCritPosition == myPerpCrits.critsAndValues.cbegin()) ||
+        myCritPosition == myPerpCrits.critsAndValues.begin()) ||
        (myPerpCrits.endIsCrit &&
-        myCritPosition == (myPerpCrits.critsAndValues.cend() - 1))) &&
+        myCritPosition == (myPerpCrits.critsAndValues.end() - 1))) &&
       (!atInputCrit ||
        (!inputPerpCrits.startIsCrit &&
-        inputCritPosition == inputPerpCrits.critsAndValues.cbegin()) ||
+        inputCritPosition == inputPerpCrits.critsAndValues.begin()) ||
        (!inputPerpCrits.endIsCrit &&
-        inputCritPosition == (inputPerpCrits.critsAndValues.cend() - 1))) &&
+        inputCritPosition == (inputPerpCrits.critsAndValues.end() - 1))) &&
       !firstIsCloserToSlope(slope, *this, myParam, input, inputParam)) {
     myPerpCrits.startIsCrit =
-        myCritPosition == myPerpCrits.critsAndValues.cbegin()
+        myCritPosition == myPerpCrits.critsAndValues.begin()
             ? false
             : myPerpCrits.startIsCrit;
     myPerpCrits.endIsCrit =
-        myCritPosition == (myPerpCrits.critsAndValues.cend() - 1)
+        myCritPosition == (myPerpCrits.critsAndValues.end() - 1)
             ? false
             : myPerpCrits.endIsCrit;
   } else if (atInputCrit &&
              ((inputPerpCrits.startIsCrit &&
-               inputCritPosition == inputPerpCrits.critsAndValues.cbegin()) ||
+               inputCritPosition == inputPerpCrits.critsAndValues.begin()) ||
               (inputPerpCrits.endIsCrit &&
                inputCritPosition ==
-                   (inputPerpCrits.critsAndValues.cend() - 1))) &&
+                   (inputPerpCrits.critsAndValues.end() - 1))) &&
              (!atMyCrit ||
               (!myPerpCrits.startIsCrit &&
-               myCritPosition == myPerpCrits.critsAndValues.cbegin()) ||
+               myCritPosition == myPerpCrits.critsAndValues.begin()) ||
               (!myPerpCrits.endIsCrit &&
-               myCritPosition == (myPerpCrits.critsAndValues.cend() - 1))) &&
+               myCritPosition == (myPerpCrits.critsAndValues.end() - 1))) &&
              !firstIsCloserToSlope(slope, input, inputParam, *this, myParam)) {
     inputPerpCrits.startIsCrit =
-        inputCritPosition == inputPerpCrits.critsAndValues.cbegin()
+        inputCritPosition == inputPerpCrits.critsAndValues.begin()
             ? false
             : inputPerpCrits.startIsCrit;
     inputPerpCrits.endIsCrit =
-        inputCritPosition == (inputPerpCrits.critsAndValues.cend() - 1)
+        inputCritPosition == (inputPerpCrits.critsAndValues.end() - 1)
             ? false
             : inputPerpCrits.endIsCrit;
   }
@@ -1513,8 +1519,7 @@ bool BezierCurveQ::curveIntersectionBlocksShift(
                   : (std::to_string(inputOtherCritPosition1->second) + "-" +
                      std::to_string(inputOtherCritPosition2->second)))
           << " myPerpCrits: " << myPerpCrits.critsAndValues
-          << " inputPerpCrits: "
-          << /*inputPerpCrits.critsAndValues*/ [&]() -> std::string {
+          << " inputPerpCrits: " << [&]() -> std::string {
     std::string result;
     for (const auto &current : inputPerpCrits.critsAndValues) {
       result += result.length() > 0 ? ", " : "";
@@ -1552,11 +1557,11 @@ bool BezierCurveQ::curveIntersectionBlocksShift(
         The curves extend in the same perpendicular direction from the slope at
         the intersection point.
         */
-        if ((myCritPosition == myPerpCrits.critsAndValues.cbegin() ||
-             myCritPosition == (myPerpCrits.critsAndValues.cend() - 1)) &&
-            (inputCritPosition == inputPerpCrits.critsAndValues.cbegin() ||
+        if ((myCritPosition == myPerpCrits.critsAndValues.begin() ||
+             myCritPosition == (myPerpCrits.critsAndValues.end() - 1)) &&
+            (inputCritPosition == inputPerpCrits.critsAndValues.begin() ||
              inputCritPosition ==
-                 (inputPerpCrits.critsAndValues.cend() -
+                 (inputPerpCrits.critsAndValues.end() -
                   1))) { // The intersection is at an endpoint of both curves.
           debug() << "BezierCurveQ::curveIntersectionBlocksShift - endpoints "
                      "of both curves,"
@@ -1564,23 +1569,23 @@ bool BezierCurveQ::curveIntersectionBlocksShift(
                   << " myPerpCrits.endIsCrit: " << myPerpCrits.endIsCrit
                   << std::endl;
           const bool myGoingInDirection = movesTowardsFromEndpoint(
-              myCritPosition == myPerpCrits.critsAndValues.cbegin(), slope,
+              myCritPosition == myPerpCrits.critsAndValues.begin(), slope,
               right, up);
-          if ((myCritPosition == myPerpCrits.critsAndValues.cbegin() &&
+          if ((myCritPosition == myPerpCrits.critsAndValues.begin() &&
                myPerpCrits.startIsCrit) ||
-              (myCritPosition == (myPerpCrits.critsAndValues.cend() - 1) &&
+              (myCritPosition == (myPerpCrits.critsAndValues.end() - 1) &&
                myPerpCrits
                    .endIsCrit)) { // My intersecting endpoint is a slope crit.
-            if ((inputCritPosition == inputPerpCrits.critsAndValues.cbegin() &&
+            if ((inputCritPosition == inputPerpCrits.critsAndValues.begin() &&
                  inputPerpCrits.startIsCrit) ||
                 (inputCritPosition ==
-                     (inputPerpCrits.critsAndValues.cend() - 1) &&
+                     (inputPerpCrits.critsAndValues.end() - 1) &&
                  inputPerpCrits.endIsCrit)) { // Both curves' intersecting
                                               // endpoints are slope crits.
               if (myGoingInDirection ==
                   input.movesTowardsFromEndpoint(
                       inputCritPosition ==
-                          inputPerpCrits.critsAndValues.cbegin(),
+                          inputPerpCrits.critsAndValues.begin(),
                       slope, right, up)) {
                 /*
                 Both curves extend from their respective endpoints in the same
@@ -1670,7 +1675,7 @@ bool BezierCurveQ::curveIntersectionBlocksShift(
                     getCWVerticalAngleForEndpoint(
                         input,
                         inputCritPosition ==
-                            inputPerpCrits.critsAndValues.cbegin(),
+                            inputPerpCrits.critsAndValues.begin(),
                         true),
                     _getCWVerticalAngle(
                         rateOfChangeAtParam(myParam), slope, right, up,
@@ -1685,12 +1690,12 @@ bool BezierCurveQ::curveIntersectionBlocksShift(
             }
           } else { // My intersecting endpoint is NOT a slope crit.
             const bool inputGoingInDirection = input.movesTowardsFromEndpoint(
-                inputCritPosition == inputPerpCrits.critsAndValues.cbegin(),
+                inputCritPosition == inputPerpCrits.critsAndValues.begin(),
                 slope, right, up);
-            if ((inputCritPosition == inputPerpCrits.critsAndValues.cbegin() &&
+            if ((inputCritPosition == inputPerpCrits.critsAndValues.begin() &&
                  inputPerpCrits.startIsCrit) ||
                 (inputCritPosition ==
-                     (inputPerpCrits.critsAndValues.cend() - 1) &&
+                     (inputPerpCrits.critsAndValues.end() - 1) &&
                  inputPerpCrits.endIsCrit)) { // My intersecting endpoint is NOT
                                               // a slope crit, the input's is.
               /*
@@ -1704,7 +1709,7 @@ bool BezierCurveQ::curveIntersectionBlocksShift(
                         input, inputParam, slope, right, up),
                     getCWVerticalAngleForEndpoint(
                         *this,
-                        myCritPosition == myPerpCrits.critsAndValues.cbegin(),
+                        myCritPosition == myPerpCrits.critsAndValues.begin(),
                         false),
                     _getCWVerticalAngle(
                         input.rateOfChangeAtParam(inputParam), slope, right, up,
@@ -1725,7 +1730,7 @@ bool BezierCurveQ::curveIntersectionBlocksShift(
                       << std::endl;
               if (differentSlopesEndpointIntersectionBlocks(
                       slope, right, up, myParam,
-                      myCritPosition == myPerpCrits.critsAndValues.cbegin(),
+                      myCritPosition == myPerpCrits.critsAndValues.begin(),
                       input, inputParam)) {
                 populateBlockedAngles(
                     cwLowersPerpMag(slope, right, up) ==
@@ -1734,11 +1739,11 @@ bool BezierCurveQ::curveIntersectionBlocksShift(
                     getCWVerticalAngleForEndpoint(
                         input,
                         inputCritPosition ==
-                            inputPerpCrits.critsAndValues.cbegin(),
+                            inputPerpCrits.critsAndValues.begin(),
                         true),
                     getCWVerticalAngleForEndpoint(
                         *this,
-                        myCritPosition == myPerpCrits.critsAndValues.cbegin(),
+                        myCritPosition == myPerpCrits.critsAndValues.begin(),
                         false),
                     outputBlockedCWVerticalAngleStart,
                     outputBlockedCWVerticalAngleEnd);
@@ -1748,17 +1753,17 @@ bool BezierCurveQ::curveIntersectionBlocksShift(
               }
             }
           }
-        } else if (myCritPosition == myPerpCrits.critsAndValues.cbegin() ||
+        } else if (myCritPosition == myPerpCrits.critsAndValues.begin() ||
                    myCritPosition ==
-                       (myPerpCrits.critsAndValues.cend() -
+                       (myPerpCrits.critsAndValues.end() -
                         1)) { // The intersection is at one of my endpoints, it
                               // is NOT at either of the input's.
           const bool myGoingInDirection = movesTowardsFromEndpoint(
-              myCritPosition == myPerpCrits.critsAndValues.cbegin(), slope,
+              myCritPosition == myPerpCrits.critsAndValues.begin(), slope,
               right, up);
-          if ((myCritPosition == myPerpCrits.critsAndValues.cbegin() &&
+          if ((myCritPosition == myPerpCrits.critsAndValues.begin() &&
                myPerpCrits.startIsCrit) ||
-              (myCritPosition == (myPerpCrits.critsAndValues.cend() - 1) &&
+              (myCritPosition == (myPerpCrits.critsAndValues.end() - 1) &&
                myPerpCrits.endIsCrit)) { // The intersection is at a slope crit
                                          // of both curves.
             if (myGoingInDirection) {    // This curve extends in the input
@@ -1884,19 +1889,17 @@ bool BezierCurveQ::curveIntersectionBlocksShift(
               return false;
             }
           }
-        } else if (inputCritPosition ==
-                       inputPerpCrits.critsAndValues.cbegin() ||
+        } else if (inputCritPosition == inputPerpCrits.critsAndValues.begin() ||
                    inputCritPosition ==
-                       (inputPerpCrits.critsAndValues.cend() -
+                       (inputPerpCrits.critsAndValues.end() -
                         1)) { // The intersection is NOT at either of my
                               // endpoints, it is at one of the input's.
           const bool inputGoingInDirection = input.movesTowardsFromEndpoint(
-              inputCritPosition == inputPerpCrits.critsAndValues.cbegin(),
-              slope, right, up);
-          if ((inputCritPosition == inputPerpCrits.critsAndValues.cbegin() &&
+              inputCritPosition == inputPerpCrits.critsAndValues.begin(), slope,
+              right, up);
+          if ((inputCritPosition == inputPerpCrits.critsAndValues.begin() &&
                inputPerpCrits.startIsCrit) ||
-              (inputCritPosition ==
-                   (inputPerpCrits.critsAndValues.cend() - 1) &&
+              (inputCritPosition == (inputPerpCrits.critsAndValues.end() - 1) &&
                inputPerpCrits.endIsCrit)) { // The intersection is at a slope
                                             // crit of both curves.
             if (!inputGoingInDirection) {
@@ -2083,14 +2086,14 @@ bool BezierCurveQ::curveIntersectionBlocksShift(
         The curves extend in the same perpendicular direction and there is a
         consequential overlap in their perpendicular distance intervals.
         */
-        if ((myCritPosition == myPerpCrits.critsAndValues.cbegin() &&
+        if ((myCritPosition == myPerpCrits.critsAndValues.begin() &&
              myPerpCrits.startIsCrit) ||
-            (myCritPosition == (myPerpCrits.critsAndValues.cend() - 1) &&
+            (myCritPosition == (myPerpCrits.critsAndValues.end() - 1) &&
              myPerpCrits
                  .endIsCrit)) { // Intersection is at one of this curve's
                                 // endpoints, the endpoint is a slope crit.
           const bool myGoingInDirection = movesTowardsFromEndpoint(
-              myCritPosition == myPerpCrits.critsAndValues.cbegin(), slope,
+              myCritPosition == myPerpCrits.critsAndValues.begin(), slope,
               right, up);
           if (!myGoingInDirection) {
             /*
@@ -2112,8 +2115,8 @@ bool BezierCurveQ::curveIntersectionBlocksShift(
           } else {
             return false;
           }
-        } else if (myCritPosition == myPerpCrits.critsAndValues.cbegin() ||
-                   myCritPosition == (myPerpCrits.critsAndValues.cend() - 1)) {
+        } else if (myCritPosition == myPerpCrits.critsAndValues.begin() ||
+                   myCritPosition == (myPerpCrits.critsAndValues.end() - 1)) {
           /*
           Intersection is at one of this curve's endpoints, the endpoint is NOT
           a slope crit. The intersection is also NOT a slope crit of the input
@@ -2124,7 +2127,7 @@ bool BezierCurveQ::curveIntersectionBlocksShift(
                   << std::endl;
           if (differentSlopesEndpointIntersectionBlocks(
                   slope, right, up, myParam,
-                  myCritPosition == myPerpCrits.critsAndValues.cbegin(), input,
+                  myCritPosition == myPerpCrits.critsAndValues.begin(), input,
                   inputParam)) {
             debug() << "^ BezierCurveQ::curveIntersectionBlocksShift - blocked."
                     << std::endl;
@@ -2230,15 +2233,15 @@ bool BezierCurveQ::curveIntersectionBlocksShift(
         The curves extend in the same perpendicular direction and there is a
         consequential overlap in their perpendicular distance intervals.
         */
-        if ((inputCritPosition == inputPerpCrits.critsAndValues.cbegin() &&
+        if ((inputCritPosition == inputPerpCrits.critsAndValues.begin() &&
              inputPerpCrits.startIsCrit) ||
-            (inputCritPosition == (inputPerpCrits.critsAndValues.cend() - 1) &&
+            (inputCritPosition == (inputPerpCrits.critsAndValues.end() - 1) &&
              inputPerpCrits
                  .endIsCrit)) { // Intersection is at one of the input curve's
                                 // endpoints, the endpoint is a slope crit.
           const bool inputGoingInDirection = input.movesTowardsFromEndpoint(
-              inputCritPosition == inputPerpCrits.critsAndValues.cbegin(),
-              slope, right, up);
+              inputCritPosition == inputPerpCrits.critsAndValues.begin(), slope,
+              right, up);
           // May need to add the overlap check below back in.
           if (inputGoingInDirection /*&& overlapBlocksEverything(myParam, input, inputParam)*/)
             {
@@ -2254,10 +2257,9 @@ bool BezierCurveQ::curveIntersectionBlocksShift(
           } else {
             return false;
           }
-        } else if (inputCritPosition ==
-                       inputPerpCrits.critsAndValues.cbegin() ||
+        } else if (inputCritPosition == inputPerpCrits.critsAndValues.begin() ||
                    inputCritPosition ==
-                       (inputPerpCrits.critsAndValues.cend() - 1)) {
+                       (inputPerpCrits.critsAndValues.end() - 1)) {
           /*
           Intersection is at one of the input curve's endpoints, the endpoint is
           NOT a vertical crit. The intersection is also NOT a vertical crit of
@@ -2273,7 +2275,7 @@ bool BezierCurveQ::curveIntersectionBlocksShift(
           */
           if (input.differentSlopesEndpointIntersectionBlocks(
                   slope, !right, !up, inputParam,
-                  inputCritPosition == inputPerpCrits.critsAndValues.cbegin(),
+                  inputCritPosition == inputPerpCrits.critsAndValues.begin(),
                   *this, myParam)) {
             const RealNum myRate = rateOfChangeAtParam(myParam);
             populateBlockedAngles(
@@ -2506,12 +2508,12 @@ bool BezierCurveQ::curveIntersectionBlocksShift(
                         std::abs(myOverlapInterval.curveEndPerpMag -
                                  myOverlapInterval.targetPointPerpMag))
                      : ([&]() -> bool {
-                         const CritsAndValues myPerpMagCrits(
+                         const CritsAndValues<3> myPerpMagCrits(
                              getPerpendicularMagnitudeCritsAndValues(
                                  input.rateOfChangeAtParam(inputParam)));
                          const auto myPerpMagRange(std::minmax_element(
-                             myPerpMagCrits.critsAndValues.cbegin(),
-                             myPerpMagCrits.critsAndValues.cend(),
+                             myPerpMagCrits.critsAndValues.begin(),
+                             myPerpMagCrits.critsAndValues.end(),
                              compareSecond));
                          return std::abs(myPerpMagRange.first->second -
                                          myOverlapInterval.targetPointPerpMag) <
@@ -2572,12 +2574,12 @@ bool BezierCurveQ::curveIntersectionBlocksShift(
                         std::abs(inputOverlapInterval.curveStartPerpMag -
                                  inputOverlapInterval.targetPointPerpMag))
                      : ([&]() -> bool {
-                         const CritsAndValues inputPerpMagCrits(
+                         const CritsAndValues<3> inputPerpMagCrits(
                              input.getPerpendicularMagnitudeCritsAndValues(
                                  rateOfChangeAtParam(myParam)));
                          const auto inputPerpMagRange(std::minmax_element(
-                             inputPerpMagCrits.critsAndValues.cbegin(),
-                             inputPerpMagCrits.critsAndValues.cend(),
+                             inputPerpMagCrits.critsAndValues.begin(),
+                             inputPerpMagCrits.critsAndValues.end(),
                              compareSecond));
                          return std::abs(
                                     inputPerpMagRange.second->second -
@@ -2653,12 +2655,12 @@ void BezierCurveQ::shiftAgainst(
   output.infiniteInitialIntersection = false;
   output.atMyCrit = false;
   output.atInputCrit = false;
-  std::vector<Point2D> myTestedPoints;
+  StaticVector<Point2D, 8> myTestedPoints;
   { // Intersection conditions.
-    const std::vector<std::pair<RealNum, RealNum>> myIntersections(
+    const StaticVector<std::pair<RealNum, RealNum>, 4> myIntersections(
         pointsOfIntersection(input));
     debug() << "BezierCurveQ::shiftAgainst - myIntersections:"
-            << [](const std::vector<std::pair<RealNum, RealNum>>
+            << [](const StaticVector<std::pair<RealNum, RealNum>, 4>
                       &input) -> std::string {
       std::string result;
       for (const std::pair<RealNum, RealNum> &current : input) {
@@ -2673,7 +2675,7 @@ void BezierCurveQ::shiftAgainst(
                                 // shaped curve or two different straight
                                 // lines.
       output.infiniteInitialIntersection = true;
-      const CritsAndValues myPerpCrits(
+      const CritsAndValues<3> myPerpCrits(
           getPerpendicularMagnitudeCritsAndValues(slope));
       debug()
           << "BezierCurveQ::shiftAgainst - infinite intersection, myPerpCrits: "
@@ -2681,13 +2683,13 @@ void BezierCurveQ::shiftAgainst(
       if (!straightLine() && myPerpCrits.critsAndValues.size() ==
                                  3) { // I have a slope equal to the input
                                       // slope and it is not at an endpoint.
-        const CritsAndValues inputPerpCrits(
+        const CritsAndValues<3> inputPerpCrits(
             input.getPerpendicularMagnitudeCritsAndValues(slope));
         debug() << "BezierCurveQ::shiftAgainst - infinite intersection, "
                    "inputPerpCrits: "
                 << inputPerpCrits.critsAndValues << std::endl;
         if (inputPerpCrits.critsAndValues.size() != 3) {
-          throw std::string("Infinite interesection, but the input curve does "
+          throw std::string("Infinite intersection, but the input curve does "
                             "not have a perpendicular crit like me.");
         }
         output.distance = 0;
@@ -2732,14 +2734,14 @@ void BezierCurveQ::shiftAgainst(
       }
     }
   }
-  std::vector<std::pair<RealNum, RealNum>> myPerpCritsSorted;
-  std::vector<std::pair<RealNum, RealNum>> inputPerpCritsSorted;
+  StaticVector<std::pair<RealNum, RealNum>, 3> myPerpCritsSorted;
+  StaticVector<std::pair<RealNum, RealNum>, 3> inputPerpCritsSorted;
   {
     myPerpCritsSorted =
         getPerpendicularMagnitudeCritsAndValues(slope).critsAndValues;
     inputPerpCritsSorted =
         input.getPerpendicularMagnitudeCritsAndValues(slope).critsAndValues;
-    for (std::vector<std::pair<RealNum, RealNum>> *current :
+    for (StaticVector<std::pair<RealNum, RealNum>, 3> *current :
          {&myPerpCritsSorted, &inputPerpCritsSorted}) {
       std::sort(current->begin(), current->end(), compareSecond);
     }
@@ -2753,7 +2755,7 @@ void BezierCurveQ::shiftAgainst(
     }
   }
   { // Endpoint conditions.
-    std::vector<std::pair<RealNum, RealNum>> testParams;
+    StaticVector<std::pair<RealNum, RealNum>, 8> testParams;
     for (const RealNum &currentInputParam : {0.0, 1.0}) {
       for (const RealNum &currentParam : pointShiftAgainstParams(
                input.valueAt(currentInputParam), slope, true)) {
@@ -2850,10 +2852,10 @@ void BezierCurveQ::shiftAgainst(
               input, slope, right, up, output.blockedCWVerticalAngleStart,
               output.blockedCWVerticalAngleEnd);
           {
-            const CritsAndValues myPerpCrits(
+            const CritsAndValues<3> myPerpCrits(
                 getPerpendicularMagnitudeCritsAndValues(slope));
-            std::vector<std::pair<RealNum, RealNum>>::const_iterator
-                myCritPosition,
+            typename StaticVector<std::pair<RealNum, RealNum>,
+                                  3>::const_iterator myCritPosition,
                 myOtherCritPosition1, myOtherCritPosition2;
             const bool atMyCrit = getCritPosition(
                 currentParams.first, PerpMagCritCalculator(*this, slope),
@@ -2879,7 +2881,7 @@ void BezierCurveQ::shiftAgainst(
       if ((i == 0 && !myStraightLine) || (i == 1 && !inputStraightLine)) {
         continue;
       }
-      const std::vector<std::pair<RealNum, RealNum>> *const perpCrits =
+      const StaticVector<std::pair<RealNum, RealNum>, 3> *const perpCrits =
           i == 0 ? &myPerpCritsSorted : &inputPerpCritsSorted;
       if (sufficientlyClose(perpCrits->front().second,
                             perpCrits->back().second)) {
@@ -3097,7 +3099,7 @@ void BezierCurveQ::shiftAgainst(
   }
 }
 
-std::vector<std::pair<RealNum, RealNum>>
+StaticVector<std::pair<RealNum, RealNum>, 4>
 BezierCurveQ::pointsOfIntersection(const BezierCurveQ &input)
     const { // Returns a list containing NaN when there are an infinite number
   // of intersection points.
@@ -3112,7 +3114,7 @@ BezierCurveQ::pointsOfIntersection(const BezierCurveQ &input)
        !sufficientlyClose(input.getMaxYExtent(), getMinYExtent()))) {
     return {};
   }
-  std::vector<std::pair<RealNum, RealNum>> result;
+  StaticVector<std::pair<RealNum, RealNum>, 4> result;
   const Point2D myStart(valueAt(0));
   const Point2D myEnd(valueAt(1));
   const Point2D inputStart(input.valueAt(0));
@@ -3317,7 +3319,7 @@ BezierCurveQ::pointsOfIntersection(const BezierCurveQ &input)
       }
     }
   } else { // At least one of this and the input curve are not straight lines.
-    const std::vector<std::pair<RealNum, RealNum>> systemSolution(
+    const StaticVector<std::pair<RealNum, RealNum>, 4> systemSolution(
         solveSystem(getParaFormX(), input.getParaFormX(), getParaFormY(),
                     input.getParaFormY(), 0, 1, 0, 1));
     debug() << "system solution: " << systemSolution << std::endl;
@@ -3335,8 +3337,8 @@ BezierCurveQ::pointsOfIntersection(const BezierCurveQ &input)
                  getMaxYExtent() > input.getMinYExtent() &&
                  getMinYExtent() < input.getMaxYExtent()) {
         result = INFINITE_INTERSECTION;
-        result.push_back(systemSolution[1]);
-        result.push_back(systemSolution[2]);
+        result.push_back(*(systemSolution.begin() + 1));
+        result.push_back(*(systemSolution.begin() + 2));
       }
     } else {
       result = systemSolution;
@@ -3389,68 +3391,15 @@ BezierCurveQ BezierCurveQ::straightLine(const Point2D &s, const Point2D &e) {
 }
 
 bool BezierCurveQ::isIntersectionInfinite(
-    const std::vector<std::pair<RealNum, RealNum>> &intersection) {
+    const StaticVector<std::pair<RealNum, RealNum>, 4> &intersection) {
   return intersection.size() == 3 && std::isnan(intersection.front().first) &&
          std::isnan(intersection.front().second);
-}
-
-/*
- * The first entry in the returned result are the endpoints, the second entry
- * are the control points.
- *
- * The first entry always has one more entry than the second, since it also
- * encapsulates the end of the last edge.
- * */
-std::pair<std::vector<Point2D>, std::vector<Point2D>>
-BezierCurveQ::circleArc(const Point2D &fulcrum, const RealNum &radius,
-                        const RealNum &startCWPositiveVerticalAngle,
-                        const RealNum &cwAngleSize, int edges) {
-  if (cwAngleSize <= 0 || cwAngleSize > 360) {
-    throw std::string("Invalid arc angle size: ") + std::to_string(cwAngleSize);
-  }
-  if (edges < 1) {
-    throw std::string("At least one edge is required.");
-  }
-  if (edges < 2 && (cwAngleSize > 180 || sufficientlyClose(cwAngleSize, 180))) {
-    throw std::string("Angle sizes greater than or equal to 180 degrees "
-                      "require at least 2 edges.");
-  }
-  if (edges < 3 && sufficientlyClose(cwAngleSize, 360)) {
-    throw std::string("Full circles require at least 3 edges.");
-  }
-  const RealNum angleIncrement = (-1.0) * cwAngleSize / RealNum(edges);
-  Point2D currentControl;
-  {
-    Point2D startPoint(fulcrum.shift(radius, 0, true, true));
-    Point2D endPoint(startPoint.rotate(fulcrum, angleIncrement));
-    RealNum endTangentSlope =
-        (-1.0) / Point2D::getSlopeBetween(endPoint, fulcrum);
-    currentControl =
-        Point2D(startPoint.getX(),
-                endPoint.getY() +
-                    (endTangentSlope * (startPoint.getX() - endPoint.getX())))
-            .rotate(fulcrum, 90 - startCWPositiveVerticalAngle);
-  }
-  Point2D currentEndpoint =
-      Point2D(fulcrum.getX(), fulcrum.getY() + radius)
-          .rotate(fulcrum, (-1.0) * startCWPositiveVerticalAngle);
-  std::pair<std::vector<Point2D>, std::vector<Point2D>> result;
-  result.first.reserve(std::vector<Point2D>::size_type(edges + 1));
-  result.second.reserve(std::vector<Point2D>::size_type(edges));
-  for (int i = 0; i < edges; i++) {
-    result.first.push_back(currentEndpoint);
-    currentEndpoint = currentEndpoint.rotate(fulcrum, angleIncrement);
-    result.second.push_back(currentControl);
-    currentControl = currentControl.rotate(fulcrum, angleIncrement);
-  }
-  result.first.push_back(currentEndpoint);
-  return result;
 }
 
 RealNum BezierCurveQ::minMaxDistance(const Point2D &input, bool max,
                                      const RealNum &minParam,
                                      const RealNum &maxParam) const {
-  const CritsAndValues distanceCrits(getDistanceCritsAndValues(input));
+  const CritsAndValues<5> distanceCrits(getDistanceCritsAndValues(input));
   RealNum result;
   RealNum resultDistance;
   {
@@ -3488,21 +3437,21 @@ void BezierCurveQ::checkParam(const RealNum &parameter) {
 }
 
 void BezierCurveQ::endpointRotationConditions(
-    const CritsAndValues &myDistanceCrits, const BezierCurveQ &input,
-    const CritsAndValues &inputDistanceCrits, const Point2D &fulcrum,
+    const CritsAndValues<5> &myDistanceCrits, const BezierCurveQ &input,
+    const CritsAndValues<5> &inputDistanceCrits, const Point2D &fulcrum,
     bool clockwise, BezierCurveQ::RotateAgainstResult &output) const {
   struct TestParamPair {
     RealNum myParam;
     RealNum inputParam;
   };
   struct LocalFunctions {
-    static std::vector<RealNum>
+    static StaticVector<RealNum, 4>
     getTestParams(const RealNum &targetDistance,
                   const bool increasingFromTargetDistance,
                   const BezierCurveQ &matchingCurve,
-                  const CritsAndValues &matchingCurveDistanceCrits,
+                  const CritsAndValues<5> &matchingCurveDistanceCrits,
                   const Point2D &fulcrum) {
-      std::vector<RealNum> result;
+      StaticVector<RealNum, 4> result;
       if (sufficientlySmall(targetDistance)) {
         return result;
       }
@@ -3516,14 +3465,14 @@ void BezierCurveQ::endpointRotationConditions(
         debug() << "BezierCurveQ::endpointRotationConditions - getTestParams,"
                 << " currentMatchingParam: "
                 << std::to_string(currentMatchingParam) << std::endl;
-        const auto matchingCrit =
-            [&]() -> std::vector<std::pair<RealNum, RealNum>>::const_iterator {
-          std::vector<std::pair<RealNum, RealNum>>::const_iterator outputVal =
-              matchingCurveDistanceCrits.critsAndValues.cend();
+        const auto matchingCrit = [&]()
+            -> StaticVector<std::pair<RealNum, RealNum>, 5>::const_iterator {
+          StaticVector<std::pair<RealNum, RealNum>, 5>::const_iterator
+              outputVal = matchingCurveDistanceCrits.critsAndValues.end();
           RealNum smallestDifference = std::numeric_limits<RealNum>::infinity();
-          for (std::vector<std::pair<RealNum, RealNum>>::const_iterator i =
-                   matchingCurveDistanceCrits.critsAndValues.cbegin();
-               i != matchingCurveDistanceCrits.critsAndValues.cend(); i++) {
+          for (StaticVector<std::pair<RealNum, RealNum>, 5>::const_iterator i =
+                   matchingCurveDistanceCrits.critsAndValues.begin();
+               i != matchingCurveDistanceCrits.critsAndValues.end(); i++) {
             if (sufficientlyClose(currentMatchingParam, i->first) &&
                 matchingCurve.sufficientlyCloseAlongCurve(currentMatchingParam,
                                                           i->first) &&
@@ -3535,11 +3484,10 @@ void BezierCurveQ::endpointRotationConditions(
           }
           return outputVal;
         }();
-        if (matchingCrit == matchingCurveDistanceCrits.critsAndValues.cend() ||
+        if (matchingCrit == matchingCurveDistanceCrits.critsAndValues.end() ||
             (increasingFromTargetDistance ==
              (matchingCrit->second <
-              (matchingCrit ==
-                       matchingCurveDistanceCrits.critsAndValues.cbegin()
+              (matchingCrit == matchingCurveDistanceCrits.critsAndValues.begin()
                    ? (matchingCrit + 1)
                    : (matchingCrit - 1))
                   ->second))) {
@@ -3561,32 +3509,32 @@ void BezierCurveQ::endpointRotationConditions(
           << " myDistanceCrits: " << myDistanceCrits.critsAndValues
           << " inputDistanceCrits: " << inputDistanceCrits.critsAndValues
           << std::endl;
-  std::vector<TestParamPair> testParams;
+  StaticVector<TestParamPair, 16> testParams;
   for (const RealNum &current : LocalFunctions::getTestParams(
-           myDistanceCrits.critsAndValues.cbegin()->second,
-           myDistanceCrits.critsAndValues.cbegin()->second <
-               (myDistanceCrits.critsAndValues.cbegin() + 1)->second,
+           myDistanceCrits.critsAndValues.begin()->second,
+           myDistanceCrits.critsAndValues.begin()->second <
+               (myDistanceCrits.critsAndValues.begin() + 1)->second,
            input, inputDistanceCrits, fulcrum)) {
     testParams.push_back({0, current});
   }
   for (const RealNum &current : LocalFunctions::getTestParams(
-           (myDistanceCrits.critsAndValues.cend() - 1)->second,
-           (myDistanceCrits.critsAndValues.cend() - 1)->second <
-               (myDistanceCrits.critsAndValues.cend() - 2)->second,
+           (myDistanceCrits.critsAndValues.end() - 1)->second,
+           (myDistanceCrits.critsAndValues.end() - 1)->second <
+               (myDistanceCrits.critsAndValues.end() - 2)->second,
            input, inputDistanceCrits, fulcrum)) {
     testParams.push_back({1, current});
   }
   for (const RealNum &current : LocalFunctions::getTestParams(
-           inputDistanceCrits.critsAndValues.cbegin()->second,
-           inputDistanceCrits.critsAndValues.cbegin()->second <
-               (inputDistanceCrits.critsAndValues.cbegin() + 1)->second,
+           inputDistanceCrits.critsAndValues.begin()->second,
+           inputDistanceCrits.critsAndValues.begin()->second <
+               (inputDistanceCrits.critsAndValues.begin() + 1)->second,
            *this, myDistanceCrits, fulcrum)) {
     testParams.push_back({current, 0});
   }
   for (const RealNum &current : LocalFunctions::getTestParams(
-           (inputDistanceCrits.critsAndValues.cend() - 1)->second,
-           (inputDistanceCrits.critsAndValues.cend() - 1)->second <
-               (inputDistanceCrits.critsAndValues.cend() - 2)->second,
+           (inputDistanceCrits.critsAndValues.end() - 1)->second,
+           (inputDistanceCrits.critsAndValues.end() - 1)->second <
+               (inputDistanceCrits.critsAndValues.end() - 2)->second,
            *this, myDistanceCrits, fulcrum)) {
     testParams.push_back({current, 1});
   }
@@ -3669,7 +3617,7 @@ void BezierCurveQ::endpointRotationConditions(
               output.blockedCWVerticalAngleEnd);
         }
         {
-          std::vector<std::pair<RealNum, RealNum>>::const_iterator
+          StaticVector<std::pair<RealNum, RealNum>, 5>::const_iterator
               myCritPosition,
               myOtherCritPosition1, myOtherCritPosition2;
           const bool atMyCrit = getCritPosition(
@@ -3680,7 +3628,7 @@ void BezierCurveQ::endpointRotationConditions(
               atRealCrit(myCritPosition, atMyCrit, myDistanceCrits);
         }
         {
-          std::vector<std::pair<RealNum, RealNum>>::const_iterator
+          StaticVector<std::pair<RealNum, RealNum>, 5>::const_iterator
               inputCritPosition,
               inputOtherCritPosition1, inputOtherCritPosition2;
           const bool atinputCrit = getCritPosition(
@@ -3710,9 +3658,9 @@ void BezierCurveQ::rotateAgainst(
     BezierCurveQ::RotateAgainstResult &output) const {
   struct LocalFunctions {
     static bool testSolution(const BezierCurveQ &moving,
-                             const CritsAndValues &movingDistanceCrits,
+                             const CritsAndValues<5> &movingDistanceCrits,
                              const BezierCurveQ &stationary,
-                             const CritsAndValues &stationaryDistanceCrits,
+                             const CritsAndValues<5> &stationaryDistanceCrits,
                              const Point2D &fulcrum, const bool clockwise,
                              const RealNum &angle, const RealNum &movingParam,
                              const RealNum &stationaryParam) {
@@ -3724,7 +3672,7 @@ void BezierCurveQ::rotateAgainst(
       const Point2D stationaryEnd(stationary.valueAt(1));
       const Point2D movingRotatedTestPoint(movingRotated.valueAt(movingParam));
       const Point2D stationaryTestPoint(stationary.valueAt(stationaryParam));
-      const std::vector<std::pair<RealNum, RealNum>> intersection(
+      const StaticVector<std::pair<RealNum, RealNum>, 4> intersection(
           movingRotated.pointsOfIntersection(stationary));
       for (const std::pair<RealNum, RealNum> &currentIntersection :
            intersection) {
@@ -3797,15 +3745,15 @@ void BezierCurveQ::rotateAgainst(
   const Point2D myEnd(valueAt(1));
   const Point2D inputStart(input.valueAt(0));
   const Point2D inputEnd(input.valueAt(1));
-  const CritsAndValues myDistanceCrits(getDistanceCritsAndValues(fulcrum));
-  const CritsAndValues inputDistanceCrits(
+  const CritsAndValues<5> myDistanceCrits(getDistanceCritsAndValues(fulcrum));
+  const CritsAndValues<5> inputDistanceCrits(
       input.getDistanceCritsAndValues(fulcrum));
   { // Intersection conditions.
-    const std::vector<std::pair<RealNum, RealNum>> myIntersections(
+    const StaticVector<std::pair<RealNum, RealNum>, 4> myIntersections(
         pointsOfIntersection(input));
     {
       const auto printDistanceCrits =
-          [](const CritsAndValues &input) -> std::string {
+          [](const CritsAndValues<5> &input) -> std::string {
         std::string result;
         for (const auto &current : input.critsAndValues) {
           result += result.length() > 0 ? ", " : "";
@@ -3825,9 +3773,9 @@ void BezierCurveQ::rotateAgainst(
       {
         struct DistanceCritPair {
           RealNum myParam;
-          std::vector<std::pair<RealNum, RealNum>> inputParams;
+          StaticVector<std::pair<RealNum, RealNum>, 5> inputParams;
         };
-        std::vector<DistanceCritPair> matchingDistanceCrits;
+        StaticVector<DistanceCritPair, 5> matchingDistanceCrits;
         for (const std::pair<RealNum, RealNum> &myCurrentCrit :
              myDistanceCrits.critsAndValues) {
           if (&myCurrentCrit == &(myDistanceCrits.critsAndValues.front()) ||
@@ -3884,8 +3832,8 @@ void BezierCurveQ::rotateAgainst(
            * */
           const RealNum myCurrentCrit = currentCritPair.myParam;
           const RealNum inputCurrentCrit =
-              std::minmax_element(currentCritPair.inputParams.cbegin(),
-                                  currentCritPair.inputParams.cend(),
+              std::minmax_element(currentCritPair.inputParams.begin(),
+                                  currentCritPair.inputParams.end(),
                                   compareSecond)
                   .first->first;
           const Point2D myCurrentPoint(valueAt(myCurrentCrit));
@@ -3972,14 +3920,14 @@ void BezierCurveQ::rotateAgainst(
         }
         // Infinite intersection, at least one curve does not touch the fulcrum,
         // there is no common distance crit.
-        for (std::vector<std::pair<RealNum, RealNum>>::const_iterator i =
-                 myDistanceCrits.critsAndValues.cbegin() + 1;
-             i != myDistanceCrits.critsAndValues.cend(); i++) {
+        for (StaticVector<std::pair<RealNum, RealNum>, 5>::const_iterator i =
+                 myDistanceCrits.critsAndValues.begin() + 1;
+             i != myDistanceCrits.critsAndValues.end(); i++) {
           const RealNum myFarther = std::max((i - 1)->second, i->second);
           const RealNum myCloser = std::min((i - 1)->second, i->second);
-          for (std::vector<std::pair<RealNum, RealNum>>::const_iterator j =
-                   inputDistanceCrits.critsAndValues.cbegin() + 1;
-               j != inputDistanceCrits.critsAndValues.cend(); j++) {
+          for (StaticVector<std::pair<RealNum, RealNum>, 5>::const_iterator j =
+                   inputDistanceCrits.critsAndValues.begin() + 1;
+               j != inputDistanceCrits.critsAndValues.end(); j++) {
             const RealNum inputFarther = std::max((j - 1)->second, j->second);
             const RealNum inputCloser = std::min((j - 1)->second, j->second);
             const RealNum overlapSize = std::min(myFarther, inputFarther) -
@@ -3989,9 +3937,10 @@ void BezierCurveQ::rotateAgainst(
               if (myFarther < inputFarther) {
                 myParam =
                     (i - 1)->second > i->second ? (i - 1)->first : i->first;
-                std::vector<RealNum> inputParams(input.getCurveDistanceParams(
-                    fulcrum, valueAt(myParam).distanceFrom(fulcrum),
-                    (j - 1)->first, j->first));
+                StaticVector<RealNum, 4> inputParams(
+                    input.getCurveDistanceParams(
+                        fulcrum, valueAt(myParam).distanceFrom(fulcrum),
+                        (j - 1)->first, j->first));
                 if (inputParams.size() != 1) {
                   throw std::string(
                       "UNEXPECTED - input curve cannot match distance in "
@@ -4001,7 +3950,7 @@ void BezierCurveQ::rotateAgainst(
               } else {
                 inputParam =
                     (j - 1)->second > j->second ? (j - 1)->first : j->first;
-                std::vector<RealNum> myParams(getCurveDistanceParams(
+                StaticVector<RealNum, 4> myParams(getCurveDistanceParams(
                     fulcrum, input.valueAt(inputParam).distanceFrom(fulcrum),
                     (i - 1)->first, i->first));
                 if (myParams.size() != 1) {
@@ -4225,19 +4174,18 @@ void BezierCurveQ::rotateAgainst(
     }
   }
   /*const */ RealNum maxAngle = [&]() -> RealNum {
-    std::vector<std::pair<RealNum, RealNum>> distanceIntervals;
-    for (std::vector<std::pair<RealNum, RealNum>>::const_iterator
-             myCurrentCrit = myDistanceCrits.critsAndValues.cbegin() + 1;
-         myCurrentCrit != myDistanceCrits.critsAndValues.cend();
+    StaticVector<std::pair<RealNum, RealNum>, 4> distanceIntervals;
+    for (StaticVector<std::pair<RealNum, RealNum>, 5>::const_iterator
+             myCurrentCrit = myDistanceCrits.critsAndValues.begin() + 1;
+         myCurrentCrit != myDistanceCrits.critsAndValues.end();
          myCurrentCrit++) {
       const RealNum myMin =
           std::min((myCurrentCrit - 1)->second, myCurrentCrit->second);
       const RealNum myMax =
           std::max((myCurrentCrit - 1)->second, myCurrentCrit->second);
-      for (std::vector<std::pair<RealNum, RealNum>>::const_iterator
-               inputCurrentCrit =
-                   inputDistanceCrits.critsAndValues.cbegin() + 1;
-           inputCurrentCrit != inputDistanceCrits.critsAndValues.cend();
+      for (StaticVector<std::pair<RealNum, RealNum>, 5>::const_iterator
+               inputCurrentCrit = inputDistanceCrits.critsAndValues.begin() + 1;
+           inputCurrentCrit != inputDistanceCrits.critsAndValues.end();
            inputCurrentCrit++) {
         const RealNum minCommon =
             std::max(myMin, std::min((inputCurrentCrit - 1)->second,
@@ -4246,7 +4194,7 @@ void BezierCurveQ::rotateAgainst(
             std::min(myMax, std::max((inputCurrentCrit - 1)->second,
                                      inputCurrentCrit->second));
         if (minCommon < maxCommon && !sufficientlyClose(minCommon, maxCommon)) {
-          const std::vector<std::pair<RealNum, RealNum>>::iterator
+          const StaticVector<std::pair<RealNum, RealNum>, 4>::iterator
               searchResult = std::find_if(
                   distanceIntervals.begin(), distanceIntervals.end(),
                   [&minCommon, &maxCommon](
@@ -4270,38 +4218,14 @@ void BezierCurveQ::rotateAgainst(
          distanceIntervals) {
       if (sufficientlySmall(currentInterval.first)) {
         const auto myMinMaxDistanceCrits(std::minmax_element(
-            myDistanceCrits.critsAndValues.cbegin(),
-            myDistanceCrits.critsAndValues.cend(), compareSecond));
+            myDistanceCrits.critsAndValues.begin(),
+            myDistanceCrits.critsAndValues.end(), compareSecond));
         const auto inputMinMaxDistanceCrits(std::minmax_element(
-            inputDistanceCrits.critsAndValues.cbegin(),
-            inputDistanceCrits.critsAndValues.cend(), compareSecond));
+            inputDistanceCrits.critsAndValues.begin(),
+            inputDistanceCrits.critsAndValues.end(), compareSecond));
         if (fuzzyEquals(std::max(myMinMaxDistanceCrits.first->second,
                                  inputMinMaxDistanceCrits.first->second),
                         currentInterval.first)) {
-          //              /*
-          //               * Fulcrum intersections' angles are the angle between
-          //               the slopes when they don't block (above).  Since an
-          //               * intersection simply has to be sufficiently close to
-          //               the fulcrum to be considered a fulcrum intersection,
-          //               the
-          //               * below logic of finding the midpoint of each
-          //               distance interval and getting angles for each curve's
-          //               matching
-          //               * points may actually yield a smaller result.
-          //               Therefore, if the current distance interval is at the
-          //               fulcrum,
-          //               * don't perform the regular calculation.
-          //               * */
-          //              if (output.angle < 0)
-          //              {
-          //                throw std::string("Fulcrum intersection, but no
-          //                output angle is set.");
-          //              }
-          //              if (result < 0 || result > output.angle)
-          //              {
-          //                result = output.angle;
-          //              }
-
           result = result > 360 ? 360 : result;
 
           continue;
@@ -4309,7 +4233,7 @@ void BezierCurveQ::rotateAgainst(
       }
       const RealNum targetDistance =
           (currentInterval.first + currentInterval.second) / 2.0;
-      const std::vector<RealNum> inputDistanceParams(
+      const StaticVector<RealNum, 4> inputDistanceParams(
           input.getCurveDistanceParams(fulcrum, targetDistance, 0, 1));
       for (const RealNum &myCurrentParam :
            getCurveDistanceParams(fulcrum, targetDistance, 0, 1)) {
@@ -4433,8 +4357,8 @@ void BezierCurveQ::rotateAgainst(
             bool testAtMyCrit, testAtInputCrit;
             const BezierCurveQ rotated(
                 rotate(fulcrum, angleBetween * (clockwise ? (-1.0) : 1.0)));
-            const std::vector<std::pair<RealNum, RealNum>> rotatedIntersection(
-                rotated.pointsOfIntersection(input));
+            const StaticVector<std::pair<RealNum, RealNum>, 4>
+                rotatedIntersection(rotated.pointsOfIntersection(input));
             debug()
                 << "BezierCurveQ::rotateAgainst - testing equal distance crits,"
                 << " my param: " << std::to_string(myCurrentCrit.first)
@@ -4547,7 +4471,7 @@ void BezierCurveQ::rotateAgainst(
         slopeDifferenceRelationTDerivative, slopeDifferenceRelationUDerivative,
         distanceDifferenceRelation, distanceDifferenceRelationTDerivative,
         distanceDifferenceRelationUDerivative);
-    static const std::vector<std::vector<RealNum>> testCoeffs(
+    static const StaticVector<StaticVector<RealNum, 64>, 7> testCoeffs(
         {{0.5},
          {0.25, 0.75},
          {0.0, 0.125, 0.375, 0.625, 0.875, 1.0},
@@ -4571,18 +4495,10 @@ void BezierCurveQ::rotateAgainst(
           0.7578125, 0.7734375, 0.7890625, 0.8046875, 0.8203125, 0.8359375,
           0.8515625, 0.8671875, 0.8828125, 0.8984375, 0.9140625, 0.9296875,
           0.9453125, 0.9609375, 0.9765625, 0.9921875}});
-    for (const std::vector<RealNum> &currentCoeffSet : testCoeffs) {
+    for (const StaticVector<RealNum, 64> &currentCoeffSet : testCoeffs) {
       for (const RealNum &myCurrentParam : currentCoeffSet) {
         for (const RealNum &inputCurrentParam : currentCoeffSet) {
           RealNum myCurrentGuess, inputCurrentGuess;
-          //            LocalFunctions::twoVarNewton(10, myCurrentParam,
-          //            inputCurrentParam, slopeDifferenceRelation,
-          //              slopeDifferenceRelationTDerivative,
-          //              slopeDifferenceRelationUDerivative,
-          //              distanceDifferenceRelation,
-          //              distanceDifferenceRelationTDerivative,
-          //              distanceDifferenceRelationUDerivative, myCurrentGuess,
-          //              inputCurrentGuess);
           {
             const std::pair<RealNum, RealNum> newtonResult(twoVarNewton<10>(
                 myCurrentParam, inputCurrentParam, slopeDifferenceRelation,
@@ -4763,13 +4679,14 @@ void BezierCurveQ::rotateAgainst(
 Returns the parameter for this curve that results in a point at the specified
 distance from a fulcrum within the specified interval.
 */
-std::vector<RealNum> BezierCurveQ::getCurveDistanceParams(
+StaticVector<RealNum, 4> BezierCurveQ::getCurveDistanceParams(
     const Point2D &fulcrum, const RealNum &distance, const RealNum &startParam,
     const RealNum &endParam) const {
   const PolynomialFunction<5> distanceEquation(
       getDistanceSquaredPF(getParaFormX(), getParaFormY(), fulcrum)
           .subtract(PolynomialFunction<1>({distance * distance})));
-  std::vector<RealNum> roots(distanceEquation.getRoots(startParam, endParam));
+  StaticVector<RealNum, 4> roots(
+      distanceEquation.getRoots(startParam, endParam));
   debug() << "BezierCurveQ::getCurveDistanceParams -"
           << " this: " << *this << " fulcrum: " << fulcrum
           << " distance: " << std::to_string(distance) << " roots: " << roots
@@ -4785,8 +4702,7 @@ std::vector<RealNum> BezierCurveQ::getCurveDistanceParams(
       return {endParam};
     }
   }
-  std::vector<RealNum> result;
-  result.reserve(std::vector<RealNum>::size_type(roots.size()));
+  StaticVector<RealNum, 4> result;
   for (const RealNum &currentRoot : roots) {
     const RealNum currentDistance(valueAt(currentRoot).distanceFrom(fulcrum));
     if (sufficientlyClose(distance, currentDistance)) {
@@ -4853,17 +4769,13 @@ std::vector<RealNum> BezierCurveQ::getCurveDistanceParams(
   return result;
 }
 
-CritsAndValues
+CritsAndValues<5>
 BezierCurveQ::getDistanceCritsAndValues(const Point2D &input) const {
-  CritsAndValues result;
+  CritsAndValues<5> result;
   result.startIsCrit = false;
   result.endIsCrit = false;
-  // const PolynomialFunction
-  // distanceSquared(getDistanceSquaredPF(getParaFormX(), getParaFormY(),
-  // input)); std::vector<RealNum>
-  // distanceSquaredCrits(distanceSquared.getDerivative().getRoots(0, 1));
-  const std::vector<RealNum> distanceSquaredCrits(
-      [&]() -> std::vector<RealNum> {
+  const StaticVector<RealNum, 3> distanceSquaredCrits(
+      [&]() -> StaticVector<RealNum, 3> {
         const RealNum a = getParaFormX().getCoefficient<2>();
         const RealNum b = getParaFormX().getCoefficient<1>();
         const RealNum c = getParaFormX().getCoefficient<0>();
@@ -4879,8 +4791,6 @@ BezierCurveQ::getDistanceCritsAndValues(const Point2D &input) const {
              (RealNum(2.0) * ((d * FmH) + (a * CmG))) + (e * e) + (b * b),
              RealNum(3) * ((d * e) + (a * b)),
              RealNum(2) * ((d * d) + (a * a))});
-        // return perpendicularSlope.getDegree() >
-        // 0?perpendicularSlope.getRoots(0, 1):std::vector<RealNum>();
         return perpendicularSlope.getRoots(0, 1);
       }());
   result.critsAndValues.push_back({0, valueAt(0).distanceFrom(input)});
@@ -5035,14 +4945,14 @@ void BezierCurveQ::populateInfiniteIntersectionShiftBlockValues(
 }
 
 void BezierCurveQ::getCWAngleIntervals(
-    const Point2D &fulcrum, std::vector<CWAngleInterval> &outputFirstSet,
-    std::vector<CWAngleInterval> &outputSecondSet) const {
+    const Point2D &fulcrum, StaticVector<CWAngleInterval, 4> &outputFirstSet,
+    StaticVector<CWAngleInterval, 4> &outputSecondSet) const {
   outputFirstSet.clear();
   outputSecondSet.clear();
   const PolynomialFunction<3> slopeRelation(
       curveSlopeMatchesFulcrumSlopePF(getParaFormX(), getParaFormY(), fulcrum));
   const Point2D vertical(fulcrum.getX(), fulcrum.getY() + 100);
-  if (/*slopeRelation.getDegree() < 1*/ slopeRelation.isConstant(0, 1) &&
+  if (slopeRelation.isConstant(0, 1) &&
       sufficientlySmall(slopeRelation.valueAt(
           0))) { // Straight line, pointing at or crossing the fulcrum.
     const Point2D start(valueAt(0));
@@ -5071,13 +4981,12 @@ void BezierCurveQ::getCWAngleIntervals(
     }
     return;
   }
-  std::vector<RealNum> testParams;
+  StaticVector<RealNum, 4> testParams;
   {
     // At most, 2 roots.
-    const std::vector<RealNum> relationRoots(
-        /*slopeRelation.getDegree() > 0*/ !slopeRelation.isConstant(0, 1)
-            ? slopeRelation.getRoots(0, 1)
-            : std::vector<RealNum>());
+    const StaticVector<RealNum, 2> relationRoots(
+        !slopeRelation.isConstant(0, 1) ? slopeRelation.getRoots(0, 1)
+                                        : StaticVector<RealNum, 2>());
     testParams.push_back(0);
     if (!relationRoots.empty()) {
       const Point2D start(valueAt(0));
@@ -5112,9 +5021,9 @@ void BezierCurveQ::getCWAngleIntervals(
     }
   } correctForFulcrumPoint;
   int clockwise = 0;
-  std::vector<CWAngleInterval> *destination = &outputFirstSet;
-  for (std::vector<RealNum>::const_iterator i = testParams.cbegin() + 1;
-       i != testParams.cend(); i++) {
+  StaticVector<CWAngleInterval, 4> *destination = &outputFirstSet;
+  for (StaticVector<RealNum, 4>::iterator i = testParams.begin() + 1;
+       i != testParams.end(); i++) {
     Point2D point1;
     if (correctForFulcrumPoint(fulcrum, *(i - 1), *this, false, point1)) {
       destination = &outputSecondSet;
@@ -5169,7 +5078,7 @@ RealNum BezierCurveQ::straightLineParamForPoint(const RealNum &lineSlope,
                                                 const Point2D &targetPoint)
     const { // Assumes that curve is a straight line, and that the target point
   // lies along that line.
-  const std::vector<RealNum> roots(
+  const StaticVector<RealNum, 2> roots(
       std::abs(lineSlope) > 1
           ? getParaFormY()
                 .subtract(PolynomialFunction<1>({targetPoint.getY()}))
@@ -5313,12 +5222,12 @@ void BezierCurveQ::getCWAngleRangeWithPositiveVertical(
   outputStart2 = -1;
   outputEnd2 = -1;
   {
-    std::vector<CWAngleInterval> firstSet;
-    std::vector<CWAngleInterval> secondSet;
+    StaticVector<CWAngleInterval, 4> firstSet;
+    StaticVector<CWAngleInterval, 4> secondSet;
     getCWAngleIntervals(fulcrum, firstSet, secondSet);
     RealNum *currentOutputStart1 = &outputStart1;
     RealNum *currentOutputEnd1 = &outputEnd1;
-    for (const std::vector<CWAngleInterval> *const currentSet :
+    for (const StaticVector<CWAngleInterval, 4> *const currentSet :
          {&firstSet, &secondSet}) {
       RealNum largestAngle = -1;
       for (const CWAngleInterval &currentInterval : *currentSet) {
@@ -5532,7 +5441,7 @@ void BezierCurveQ::shiftAgainstCircleArc(const CircleArc &circleArc,
         const Point2D curvePoint(valueAt(currentCurveParam));
         const RealNum slopeBetween =
             Point2D::getSlopeBetween(circleArc.getFulcrum(), curvePoint);
-        std::vector<Point2D> circlePoints;
+        StaticVector<Point2D, 2> circlePoints;
         const RealNum curvePointPerpMag =
             Point2D::getPerpendicularMagnitude(curvePoint, slope);
         const RealNum circleFulcrumPerpMag =
@@ -5689,7 +5598,7 @@ void BezierCurveQ::rotateAgainstCircleArc(const CircleArc &circleArc,
   outputParam = -1;
   const Point2D myStart(valueAt(0));
   const Point2D myEnd(valueAt(1));
-  const CritsAndValues myDistanceCrits(getDistanceCritsAndValues(fulcrum));
+  const CritsAndValues<5> myDistanceCrits(getDistanceCritsAndValues(fulcrum));
   { // Intersection conditions.
     for (const RealNum &currentPotentialIntersection : getCurveDistanceParams(
              circleArc.getFulcrum(), circleArc.getRadius(), 0, 1)) {
@@ -5919,17 +5828,16 @@ void BezierCurveQ::rotateAgainstCircleArc(const CircleArc &circleArc,
           getParaFormY().getCoefficient<0>(), circleArc.getFulcrum().getX(),
           circleArc.getFulcrum().getY(), circleArc.getRadius(), fulcrum.getX(),
           fulcrum.getY()));
-      if (/*relation.getDegree() > 0*/ !relation.isConstant(
-          0, 1)) { // The degree 0 appears to happen when this curve is already
-                   // touching the circle arc.
+      if (!relation.isConstant(
+              0, 1)) { // The degree 0 appears to happen when this curve is
+                       // already touching the circle arc.
         for (const RealNum &currentSolution : relation.getRoots(0, 1)) {
           const Point2D curvePoint(valueAt(currentSolution));
           if (curvePoint != myStart && curvePoint != myEnd) {
             const RealNum curveSlope(rateOfChangeAtParam(currentSolution));
-            std::vector<Point2D> targetCircleFulcrums;
+            StaticVector<Point2D, 2> targetCircleFulcrums;
             if (sufficientlyCloseSlopes(curveSlope, Point2D::getSlopeBetween(
                                                         curvePoint, fulcrum))) {
-              targetCircleFulcrums.reserve(2);
               const RealNum perpSlope = (-1.0) / curveSlope;
               for (const Point2D &current :
                    {curvePoint.shift(circleArc.getRadius(), perpSlope, true,
@@ -5942,7 +5850,6 @@ void BezierCurveQ::rotateAgainstCircleArc(const CircleArc &circleArc,
                 }
               }
             } else {
-              targetCircleFulcrums.reserve(1);
               RealNum targetFulcrumX, targetFulcrumY;
               getTargetCircleFulcrumForCurveRotate(
                   circleArc.getRadius(), distanceBetweenFulcrums,
@@ -5964,7 +5871,7 @@ void BezierCurveQ::rotateAgainstCircleArc(const CircleArc &circleArc,
                       CircleArc::PointInArc::INSIDE) {
                 const RealNum curvePointDistance =
                     curvePoint.distanceFrom(fulcrum);
-                std::vector<std::pair<RealNum, RealNum>>::const_iterator
+                StaticVector<std::pair<RealNum, RealNum>, 5>::const_iterator
                     myCritPosition,
                     myOtherCritPosition1, myOtherCritPosition2;
                 const bool atMyCrit = getCritPosition(
@@ -6123,7 +6030,7 @@ BezierCurveQ::getTestCircleArcForEndpoint(const RealNum &parameter,
   }
 }
 
-std::vector<RealNum> BezierCurveQ::pointShiftAgainstParams(
+StaticVector<RealNum, 2> BezierCurveQ::pointShiftAgainstParams(
     const Point2D &input, const RealNum &slope, bool skipIntersections) const {
   debug() << "BezierCurveQ::pointShiftAgainstParams -"
           << " this: " << *this << " input: " << input << " slope: " << slope
@@ -6147,7 +6054,7 @@ std::vector<RealNum> BezierCurveQ::pointShiftAgainstParams(
   there is no possible point along the input slope that the input point touches
   this curve.
   */
-  std::vector<RealNum> result;
+  StaticVector<RealNum, 2> result;
   if (/*relationship.getDegree() == 0*/ relationship.isConstant(0, 1)) {
     if (skipIntersections) {
       return result;
@@ -6230,26 +6137,6 @@ RealNum BezierCurveQ::paramForPoint(const Point2D &input) const {
 
 std::ostream &operator<<(std::ostream &os, const BezierCurveQ &input) {
   os << input.toString();
-  return os;
-}
-
-std::ostream &
-operator<<(std::ostream &os,
-           const std::vector<std::pair<RealNum, RealNum>> &input) {
-  for (const std::pair<RealNum, RealNum> &current : input) {
-    if (&current != &input.front()) {
-      os << ",";
-    }
-    os << "(" << current.first << "," << current.second << ")";
-  }
-  return os;
-}
-
-template <typename T>
-std::ostream &operator<<(std::ostream &os, const std::vector<T> &input) {
-  for (const T &current : input) {
-    os << current;
-  }
   return os;
 }
 } // namespace bezier_geometry

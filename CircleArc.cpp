@@ -98,17 +98,17 @@ CircleArc CircleArc::shift(const RealNum &distance, const RealNum &slope,
  * The curve parameters represent the angle from the positive vertical in the
  * range [0, 1].
  * */
-CritsAndValues
+CritsAndValues<4>
 CircleArc::getPerpendicularMagnitudeCritsAndValues(const RealNum &slope) const {
   return getCritsAndValues(slope, [&slope](const Point2D &input) -> RealNum {
     return Point2D::getPerpendicularMagnitude(input, slope);
   });
 }
 
-CritsAndValues
+CritsAndValues<4>
 CircleArc::getDistanceCritsAndValues(const Point2D &fulcrum) const {
   if (fulcrum == circleFulcrum) {
-    CritsAndValues result;
+    CritsAndValues<4> result;
     result.startIsCrit = true;
     result.endIsCrit = true;
     result.critsAndValues = {{0, circleRadius}, {1, circleRadius}};
@@ -153,9 +153,9 @@ Point2D CircleArc::valueAt(const RealNum &parameter) const {
 }
 
 template <typename T>
-CritsAndValues CircleArc::getCritsAndValues(const RealNum &slope,
-                                            const T &valueCalc) const {
-  CritsAndValues result;
+CritsAndValues<4> CircleArc::getCritsAndValues(const RealNum &slope,
+                                               const T &valueCalc) const {
+  CritsAndValues<4> result;
   const RealNum perpSlope = (-1.0) / slope;
   const Point2D critPoint1(
       circleFulcrum.shift(circleRadius, perpSlope, true, true));
