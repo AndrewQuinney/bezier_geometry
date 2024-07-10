@@ -231,18 +231,6 @@ RealNum _getCWVerticalAngle(const RealNum &inputSlope,
   return direction.getCWVerticalAngle(origin);
 }
 
-RealNum getCWVerticalAngleForEndpoint(const BezierCurveQ &input, bool start,
-                                      bool intoCurve) {
-  const Point2D point(input.valueAt(start ? 0 : 1));
-  const Point2D test(input.getTestPointForEndIntersection(start));
-  const RealNum slope = Point2D::getSlopeBetween(point, test);
-  return _getCWVerticalAngle(
-      slope, slope,
-      intoCurve ? test.getX() >= point.getX() : test.getX() < point.getX(),
-      intoCurve ? test.getY() >= point.getY() : test.getY() < point.getY(),
-      false, false);
-}
-
 void getLargestBlockedCWVerticalAngle(
     const RealNum &directionSlope, bool directionRight, bool directionUp,
     const RealNum &slope1, const RealNum &slope2,
@@ -4537,15 +4525,6 @@ void BezierCurveQ::rotateAgainst(
                     distanceDifferenceRelationNextVal;
                 previousSlopeDifferenceRelationVal =
                     slopeDifferenceRelationNextVal;
-                //                  LocalFunctions::twoVarNewton(3,
-                //                  myCurrentGuess, inputCurrentGuess,
-                //                  slopeDifferenceRelation,
-                //                    slopeDifferenceRelationTDerivative,
-                //                    slopeDifferenceRelationUDerivative,
-                //                    distanceDifferenceRelation,
-                //                    distanceDifferenceRelationTDerivative,
-                //                    distanceDifferenceRelationUDerivative,
-                //                    myRefinedGuess, inputRefinedGuess);
                 {
                   const std::pair<RealNum, RealNum> newtonResult(
                       twoVarNewton<3>(myCurrentGuess, inputCurrentGuess,
@@ -5212,81 +5191,6 @@ RealNum BezierCurveQ::getDistanceConcavity(const RealNum &param,
   distance-oriented result.
   */
   return curveDistanceConcavityVal / rotationTangentSpeedVal;
-}
-
-void BezierCurveQ::getCWAngleRangeWithPositiveVertical(
-    const Point2D &fulcrum, RealNum &outputStart1, RealNum &outputEnd1,
-    RealNum &outputStart2, RealNum &outputEnd2) const {
-  outputStart1 = -1;
-  outputEnd1 = -1;
-  outputStart2 = -1;
-  outputEnd2 = -1;
-  {
-    StaticVector<CWAngleInterval, 4> firstSet;
-    StaticVector<CWAngleInterval, 4> secondSet;
-    getCWAngleIntervals(fulcrum, firstSet, secondSet);
-    RealNum *currentOutputStart1 = &outputStart1;
-    RealNum *currentOutputEnd1 = &outputEnd1;
-    for (const StaticVector<CWAngleInterval, 4> *const currentSet :
-         {&firstSet, &secondSet}) {
-      RealNum largestAngle = -1;
-      for (const CWAngleInterval &currentInterval : *currentSet) {
-        const RealNum currentAngle =
-            sufficientlyClose(currentInterval.endCWVerticalAngle,
-                              currentInterval.startCWVerticalAngle)
-                ? 0
-                : currentInterval.endCWVerticalAngle -
-                      currentInterval.startCWVerticalAngle +
-                      (currentInterval.endCWVerticalAngle >=
-                               currentInterval.startCWVerticalAngle
-                           ? 0.0
-                           : 360.0);
-        if (currentAngle > largestAngle) {
-          largestAngle = currentAngle;
-          (*currentOutputStart1) = currentInterval.startCWVerticalAngle;
-          (*currentOutputEnd1) = currentInterval.endCWVerticalAngle;
-        }
-      }
-      currentOutputStart1 = &outputStart2;
-      currentOutputEnd1 = &outputEnd2;
-    }
-  }
-  if (outputStart1 < 0 && outputStart2 >= 0) {
-    outputStart1 = outputStart2;
-    outputEnd1 = outputEnd2;
-    outputStart2 = -1;
-    outputEnd2 = -1;
-  }
-}
-
-void BezierCurveQ::getRangeAlongSlope(const RealNum &slope,
-                                      RealNum &outputStart,
-                                      RealNum &outputEnd) const {
-  const RealNum perpSlope = (-1.0) / slope;
-  const RealNum critParam =
-      std::abs(perpSlope) < 1
-          ? ((getParaFormX().getCoefficient<1>() * perpSlope) -
-             getParaFormY().getCoefficient<1>()) /
-                (2.0 * (getParaFormY().getCoefficient<2>() -
-                        (getParaFormX().getCoefficient<2>() * perpSlope)))
-          : (getParaFormX().getCoefficient<1>() -
-             (getParaFormY().getCoefficient<1>() / perpSlope)) /
-                (2.0 * ((getParaFormY().getCoefficient<2>() / perpSlope) -
-                        getParaFormX().getCoefficient<2>()));
-  RealNum startValue =
-      Point2D::getPerpendicularMagnitude(valueAt(0), perpSlope);
-  RealNum endValue = Point2D::getPerpendicularMagnitude(valueAt(1), perpSlope);
-  if (!std::isnan(critParam) && critParam > 0 && critParam < 1) {
-    const RealNum critValue =
-        Point2D::getPerpendicularMagnitude(valueAt(critParam), perpSlope);
-    if (std::abs(startValue - critValue) > std::abs(endValue - critValue)) {
-      endValue = critValue;
-    } else {
-      startValue = critValue;
-    }
-  }
-  outputStart = startValue < endValue ? startValue : endValue;
-  outputEnd = startValue < endValue ? endValue : startValue;
 }
 
 void BezierCurveQ::shiftAgainstCircleArc(const CircleArc &circleArc,
@@ -6133,6 +6037,19 @@ RealNum BezierCurveQ::paramForPoint(const Point2D &input) const {
            : std::isnan(targetParam) ? -1
                                      : targetParam;
   }
+}
+
+RealNum BezierCurveQ::getCWVerticalAngleForEndpoint(const BezierCurveQ &input,
+                                                    bool start,
+                                                    bool intoCurve) {
+  const Point2D point(input.valueAt(start ? 0 : 1));
+  const Point2D test(input.getTestPointForEndIntersection(start));
+  const RealNum slope = Point2D::getSlopeBetween(point, test);
+  return _getCWVerticalAngle(
+      slope, slope,
+      intoCurve ? test.getX() >= point.getX() : test.getX() < point.getX(),
+      intoCurve ? test.getY() >= point.getY() : test.getY() < point.getY(),
+      false, false);
 }
 
 std::ostream &operator<<(std::ostream &os, const BezierCurveQ &input) {

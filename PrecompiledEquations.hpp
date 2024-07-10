@@ -69,38 +69,6 @@ void getTargetCircleFulcrumForCurveRotate(
     const RealNum &curveSlopeAtPoint, RealNum &outputTargetFulcrumX,
     RealNum &outputTargetFulcrumY);
 
-//  template<std::size_t DIM1_SIZE, std::size_t DIM2_SIZE> RealNum
-//  eval2VarFunction(
-//    const std::array<std::array<RealNum, DIM2_SIZE>, DIM1_SIZE> &input, const
-//    RealNum &var1Value, const RealNum &var2Value)
-//  {
-//    RealNum result = 0.0;
-//    if (DIM1_SIZE >= DIM2_SIZE)
-//    {
-//      for (int i = DIM1_SIZE-1; i >= 0; i--)
-//      {
-//        RealNum subResult = 0;
-//        for (int j = DIM2_SIZE-1; j >= 0; j--)
-//        {
-//          subResult = (var2Value*subResult)+input[i][j];
-//        }
-//        result = (var1Value*result)+subResult;
-//      }
-//    } else
-//    {
-//      for (int i = DIM2_SIZE-1; i >= 0; i--)
-//      {
-//        RealNum subResult = 0;
-//        for (int j = DIM1_SIZE-1; j >= 0; j--)
-//        {
-//          subResult = (var1Value*subResult)+input[j][i];
-//        }
-//        result = (var2Value*result)+subResult;
-//      }
-//    }
-//    return result;
-//  }
-
 class TwoVarFunctionEvaluator {
 public:
   template <std::size_t DIM1_SIZE, std::size_t DIM2_SIZE>
