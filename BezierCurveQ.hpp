@@ -33,32 +33,116 @@ namespace bezier_geometry {
  */
 class BezierCurveQ {
 public:
+  /**
+   * \brief The result of a 'shift against' operation.
+   *
+   * This contains the result of the calculation as well as other useful data
+   * that can be helpful for caching.
+   *
+   * \see BezierCurveQ::shiftAgainst
+   */
   struct ShiftAgainstResult {
-    RealNum distance;
-    RealNum param;
-    RealNum inputParam;
-    RealNum blockedCWVerticalAngleStart;
-    RealNum blockedCWVerticalAngleEnd;
-    bool infiniteInitialIntersection;
-    bool atMyCrit;
-    bool atInputCrit;
+    RealNum distance; /**< The straight line distance that the curve can move
+                         before being 'blocked' by the curve being moved
+                         against. -1 if there is no block. */
+    RealNum param; /**< The parameter for the shifting curve that represents the
+                      point at which it is blocked. -1 if there is no block. */
+    RealNum inputParam; /**< The parameter for the stationary curve that
+                           represents the point where it blocks the shifting
+                           curve. -1 if there is no block. */
+    RealNum blockedCWVerticalAngleStart; /**< An angle in degrees with an upward
+                                            vertical line starting at the
+                                            blocking point that represents the
+                                            start of the other directions where
+                                            shifts would also be blocked by this
+                                            point. -1 if there is no block. */
+    RealNum
+        blockedCWVerticalAngleEnd;    /**< An angle in degrees with an upward
+                                         vertical line starting at the blocking
+                                         point that represents the end of the other
+                                         directions where shifts would also be
+                                         blocked by this point. This is to be
+                                         interpreted as clockwise of the start
+                                         angle, though it may not be a larger
+                                         number. -1 if there is no block. */
+    bool infiniteInitialIntersection; /**< True if the shifting and the
+                                         stationary curves have an infinite
+                                         intersection before any move is
+                                         attempted. \see
+                                         BezierCurveQ::isIntersectionInfinite */
+    bool atMyCrit;    /**< True if the blocking point is at a 'perpendicular
+                         magnitude' critical point for the shift slope on the
+                         shifting curve. \see Point2D::perpendicularMagnitude */
+    bool atInputCrit; /**< True if the blocking point is at a 'perpendicular
+                         magnitude' critical point for the shift slope on the
+                         stationary curve. \see Point2D::perpendicularMagnitude
+                       */
   };
+  /**
+   * \brief The result of a 'rotate against' operation.
+   *
+   * This contains the result of the calculation as well as other useful data
+   * that can be helpful for caching.
+   *
+   * \see BezierCurveQ::rotateAgainst
+   */
   struct RotateAgainstResult {
-    RealNum angle;
-    RealNum param;
-    RealNum inputParam;
-    RealNum blockedCWVerticalAngleStart;
-    RealNum blockedCWVerticalAngleEnd;
-    bool infiniteInitialIntersection;
-    bool atMyCrit;
-    bool atInputCrit;
+    RealNum angle; /**< The angle about the input fulcrum that the moving curve
+                      could rotate before being 'blocked' by the stationary
+                      curve. -1 if there is no block. */
+    RealNum param; /**< The parameter for the rotating curve that represents the
+                      point at which it is blocked. -1 if there is no block. */
+    RealNum inputParam; /**< The parameter for the stationary curve that
+                           represents the point where it blocks the rotating
+                           curve. -1 if there is no block. */
+    RealNum blockedCWVerticalAngleStart; /**< An angle in degrees with an upward
+                                            vertical line starting at the
+                                            blocking point that represents the
+                                            start of the other directions where
+                                            shifts would also be blocked by this
+                                            point. -1 if there is no block. */
+    RealNum
+        blockedCWVerticalAngleEnd;    /**< An angle in degrees with an upward
+                                         vertical line starting at the blocking
+                                         point that represents the end of the other
+                                         directions where shifts would also be
+                                         blocked by this point. This is to be
+                                         interpreted as clockwise of the start
+                                         angle, though it may not be a larger
+                                         number. -1 if there is no block. */
+    bool infiniteInitialIntersection; /**< True if the rotating and the
+                                         stationary curves have an infinite
+                                         intersection before any move is
+                                         attempted. */
+    bool atMyCrit; /**< True if the blocking point is at a distance crit for the
+                      rotating curve. \see Point2D::distanceFrom */
+    bool atInputCrit; /**< True if the blocking point is at a distance crit for
+                         the stationary curve. \see Point2D::distanceFrom */
   };
-  struct CWAngleInterval { // endParam always indicates a point clockwise of
-                           // startParam about a fulcrum.
-    RealNum startParam;
-    RealNum startCWVerticalAngle;
-    RealNum endParam;
-    RealNum endCWVerticalAngle;
+  /**
+   * \brief A single interval on a curve representing a direction of rotation
+   * about a fulcrum.
+   *
+   * As the Bezier parameter increases a curve may move in a clockwise direction
+   * about a given point, counterclockwise, or neither in the case of a straight
+   * line pointing at the fulcrum. An instance of this represents a single
+   * interval along a curve where the curve moves in a single direction about a
+   * point relative to its parameter. \see BezierCurveQ::getCWAngleIntervals
+   */
+  struct CWAngleInterval {
+    RealNum startParam; /**< The Bezier parameter for the start of this
+                           interval. Always in the range [0, 1] */
+    RealNum startCWVerticalAngle; /**< The clockwise angle (in degrees) with a
+                                     vertical line starting at the fulcrum where
+                                     the interval starts. */
+    RealNum
+        endParam; /**< The Bezier parameter for the end of this interval; this
+                     always indicates a point clockwise of the point represented
+                     by the start parameter. Always in the range [0, 1] */
+    RealNum endCWVerticalAngle; /**< The clockwise angle (in degrees) with a
+                                   vertical line starting at the fulcrum where
+                                   the interval ends. To be interpreted as
+                                   clockwise of the start angle */
   };
 
   /**
@@ -453,71 +537,415 @@ public:
       const RealNum
           &slope /**< The slope to evaluate perpendicular magnitudes for. */
   ) const;
-  void rotateAgainstCircleArc(const CircleArc &circleArc,
-                              const Point2D &fulcrum, bool clockwise,
-                              RealNum &outputAngle, RealNum &outputParam,
-                              Point2D &outputCirclePoint) const;
-  void shiftAgainstCircleArc(const CircleArc &circleArc, const RealNum &slope,
-                             bool right, bool up, RealNum &outputDistance,
-                             RealNum &outputParam,
-                             Point2D &outputCirclePoint) const;
-  bool curveIntersectionBlocksShift(const RealNum &myParam,
-                                    const RealNum &slope, bool right, bool up,
-                                    const RealNum &inputParam,
-                                    const BezierCurveQ &input,
-                                    const bool tolerateSmallMagnitudeOverlap,
-                                    RealNum &outputBlockedCWVerticalAngleStart,
-                                    RealNum &outputBlockedCWVerticalAngleEnd,
-                                    bool &outputAtMyCrit,
-                                    bool &outputAtInputCrit) const;
-  bool curveIntersectionBlocksRotate(
-      const RealNum &myParam, const CritsAndValues<5> &myDistanceCrits,
-      const BezierCurveQ &input, const RealNum &inputParam,
-      const CritsAndValues<5> &inputDistanceCrits, const Point2D &fulcrum,
-      const bool clockwise, RealNum &outputBlockedCWVerticalAngleStart,
-      RealNum &outputBlockedCWVerticalAngleEnd, bool &outputAtMyCrit,
-      bool &outputAtInputCrit) const;
-  StaticVector<RealNum, 2>
-  pointShiftAgainstParams(const Point2D &input, const RealNum &slope,
-                          bool skipIntersections) const;
-  StaticVector<RealNum, 4>
-  getCurveDistanceParams(const Point2D &fulcrum, const RealNum &distance,
-                         const RealNum &startParam,
-                         const RealNum &endParam) const;
-  void
-  getCWAngleIntervals(const Point2D &fulcrum,
-                      StaticVector<CWAngleInterval, 4> &outputFirstSet,
-                      StaticVector<CWAngleInterval, 4> &outputSecondSet) const;
-  bool sufficientlyCloseAlongCurve(const RealNum &curveParam,
-                                   const RealNum &testParam) const;
-  RealNum paramForPoint(const Point2D &input) const;
-
-  static BezierCurveQ longStraightLine(const RealNum &slope,
-                                       const Point2D &point);
-  static BezierCurveQ longStraightLine(const Point2D &start,
-                                       const Point2D &point);
-  static BezierCurveQ straightLine(const Point2D &s, const Point2D &e);
   /**
-   * \brief test
-   * @param intersection
-   * @return
-   */
-  static bool isIntersectionInfinite(
-      const StaticVector<std::pair<RealNum, RealNum>, 4> &intersection);
-  /*
-   * The first entry in the returned result are the endpoints, the second entry
-   * are the control points.
+   * \brief Calculate the angle that this curve can be rotated until it 'hits'
+   * the input arc.
    *
-   * The first entry always has one more entry than the second, since it also
-   * encapsulates the end of the last edge.
-   * */
+   * Given a fulcrum and rotation direction, calculate how much of an angle this
+   * curve can be rotated until it is 'blocked' by the input arc.
+   *
+   * A 'block' is not necessarily a place where this curve would touch/intersect
+   * after a rotation. Any such touch must sufficiently overlap the direction of
+   * rotation to ensure that a 'graze' would not cause a block, such as one
+   * curve simply moving tangentially to another.
+   *
+   * \see ClockwiseLogic
+   * \see SufficientlyClose
+   */
+  void rotateAgainstCircleArc(
+      const CircleArc &circleArc, /**< The arc that angles and blocking points
+                                     are to be calculated against. */
+      const Point2D &fulcrum,     /**< The fulcrum of the rotation. */
+      bool clockwise,             /**< The direction of the rotation. */
+      RealNum &outputAngle, /**< Destination for the calculated angle that this
+                               curve could rotate until it is blocked by the
+                               input arc. -1 if this rotation is not blocked. */
+      RealNum &outputParam, /**< Destination for the parameter for this curve
+                               that represents the blocking point. In the range
+                               [0, 1] if there is a block; -1 if this rotation
+                               is not blocked. */
+      Point2D &outputCirclePoint /**< Destination for point on the input circle
+                                    arc that blocks. This is not assigned if
+                                    there is no block. */
+  ) const;
+  /**
+   * \brief Calculate the distance that this curve can be shifted until it
+   * 'hits' the input arc.
+   *
+   * Given a shift direction, calculate how far this
+   * curve can be moved in a straight line until it is 'blocked' by the input
+   * arc.
+   *
+   * A 'block' is not necessarily a place where this curve would touch/intersect
+   * after a rotation. Any such touch must sufficiently overlap the direction of
+   * rotation to ensure that a 'graze' would not cause a block, such as one
+   * curve simply moving tangentially to another.
+   *
+   * \see DirectionalLogic
+   * \see SufficientlyClose
+   */
+  void shiftAgainstCircleArc(
+      const CircleArc &circleArc, /**< The arc that distances and blocking
+                                     points are to be calculated against. */
+      const RealNum &
+          slope, /**< The slope along which the movement is to be calculated. */
+      bool right, /**< The direction along the input slope that the shift is to
+                     be calculated. */
+      bool up, /**< The direction along the input slope, only used if the slope
+                  is very large. */
+      RealNum &outputDistance, /**< Destination for the calculated distance
+                                  until this curve is blocked. -1 if this
+                                  rotation is not blocked. */
+      RealNum
+          &outputParam, /**< Destination for this curve's parameter where it
+                           would be blocked by the input arc. In the range [0,
+                           1] if there is a block; -1 if there is no block. */
+      Point2D &outputCirclePoint /**< Destination for the point on the input
+                                    circle arc where the block will occur. This
+                                    is not assigned if there is no block. */
+  ) const;
+  /**
+   * \brief Determine if an intersection will block a straight line movement.
+   *
+   * Generally, if the input curve 'crosses' this curve at the input point there
+   * is always a block. A 'cross' refers to when the curves touch, they do not
+   * have 'sufficiently close' slopes, and the intersection is also not at
+   * either curves' endpoint.
+   *
+   * However, if the curves just 'touch' (the reverse of the above 'cross'
+   * conditions) at the input point, there may be no block, depending on the
+   * input direction. For example, if one curve just touches a straight vertical
+   * line at at it's leftmost point, then a shift anywhere to the right would
+   * not be blocked by such an intersection. This is helpful when these curves
+   * are part of a 2d spline shape and physical bodies are to be simulated.
+   *
+   * If the intersection is found to block, other useful data is returned,
+   * including the 'blocked angle interval'. These values represent the other
+   * directions that would also be blocked by the intersection. Useful for
+   * result caching.
+   *
+   * \see DirectionalLogic
+   * \see SufficientlyClose
+   * \see ClockwiseLogic
+   * \see curveIntersectionBlocksRotate
+   * \see Point2D::getPerpendicularMagnitude
+   *
+   * @return True if the input curve blocks a straight line move in the input
+   * direction at the input intersection point.
+   */
+  bool curveIntersectionBlocksShift(
+      const RealNum &myParam, /**< The parameter for this curve where the
+                                 intersection takes place. */
+      const RealNum &
+          slope, /**< The slope along which the movement is to be calculated. */
+      bool right, /**< The direction along the input slope that the shift is to
+                     be calculated. */
+      bool up, /**< The direction along the input slope, only used if the slope
+                  is very large. */
+      const RealNum
+          &inputParam, /**< The parameter for the input curve where the
+                          intersection takes place. It is assumed that the input
+                          curve's value at this parameter matches tha of this
+                          curve at this curve's parameter. */
+      const BezierCurveQ
+          &input, /**< The other curve that is intersecting this curve. */
+      const bool
+          tolerateSmallMagnitudeOverlap, /**< Flag for considering a
+                                            'sufficiently small' overlap in
+                                            these curves' 'perpendicular
+                                            magnitude' for the input slope to
+                                            not block. Generally this should
+                                            always be true except for when this
+                                            method is recycled as a part of
+                                            calculating a rotation block, where
+                                            tolerances must be tighter. */
+      RealNum
+          &outputBlockedCWVerticalAngleStart, /**< Destination for the start of
+                                                 the blocked interval if the
+                                                 intersection is found to be
+                                                 blocking. This is an angle (in
+                                                 degrees) with a vertical line
+                                                 starting at the intersection
+                                                 point and extending 'upwards'.
+                                                 -1 if this intersection is not
+                                                 blocking. */
+      RealNum
+          &outputBlockedCWVerticalAngleEnd, /**< Destination for the end of the
+                                               blocked interval if the
+                                               intersection is found to be
+                                               blocking. This is an angle (in
+                                               degrees) with a vertical line
+                                               starting at the intersection
+                                               point and extending 'upwards'. -1
+                                               if this intersection is not
+                                               blocking. */
+      bool &outputAtMyCrit,   /**< Destination for the flag indicating that the
+                                 intersection point is at a 'perpendicular
+                                 magnitude' critical point (change from increasing
+                                 to decreasing or vice versa) on this curve. */
+      bool &outputAtInputCrit /**< Destination for the flag indicating that the
+                                 intersection point is at a 'perpendicular
+                                 magnitude' critical point (change from
+                                 increasing to decreasing or vice versa) on the
+                                 input curve. */
+  ) const;
+  /**
+   * \brief Determine if an intersection will block a rotation.
+   *
+   * Generally, if the input curve 'crosses' this curve at the input point there
+   * is always a block. A 'cross' refers to when the curves touch, they do not
+   * have 'sufficiently close' slopes, and the intersection is also not at
+   * either curves' endpoint.
+   *
+   * However, if the curves just 'touch' (the reverse of the above 'cross'
+   * conditions) at the input point, there may be no block, depending on the
+   * input direction. For example, if one curve just touches a straight vertical
+   * line at at it's leftmost point, then a clockwise rotation about a point far
+   * below either curve would not be blocked by such an intersection. This is
+   * helpful when these curves are part of a 2d spline shape and physical bodies
+   * are to be simulated.
+   *
+   * If the intersection is found to block, other useful data is returned,
+   * including the 'blocked angle interval'. These values represent the other
+   * directions that would also be blocked by the intersection. Useful for
+   * result caching.
+   *
+   * \see SufficientlyClose
+   * \see ClockwiseLogic
+   *
+   * @return True if the input curve blocks a rotation about the input fulcrum
+   * in the input direction at the input intersection point.
+   */
+  bool curveIntersectionBlocksRotate(
+      const RealNum &myParam, /**< The parameter for this curve where the
+                                 intersection takes place. */
+      const CritsAndValues<5>
+          &myDistanceCrits, /**< The parameters and associated distances between
+                               this curve and the fulcrum where the rate of
+                               change of this curve's distance changes
+                               direction. */
+      const BezierCurveQ &input, /**< The curve intersecting this curve. */
+      const RealNum &inputParam, /**< The parameter for the input curve where
+                                    the intersection takes place. */
+      const CritsAndValues<5>
+          &inputDistanceCrits, /**< The parameters and associated distances
+                                  between the input curve and the fulcrum where
+                                  the rate of change of the input curve's
+                                  distance changes direction. */
+      const Point2D &fulcrum,  /**< The fulcrum for the rotation. */
+      const bool clockwise,    /**< The direction of the rotation.. */
+      RealNum
+          &outputBlockedCWVerticalAngleStart, /**< Destination for the start of
+                                                 the blocked interval if the
+                                                 intersection is found to be
+                                                 blocking. This is an angle (in
+                                                 degrees) with a vertical line
+                                                 starting at the intersection
+                                                 point and extending 'upwards'.
+                                                 -1 if this intersection is not
+                                                 blocking. */
+      RealNum
+          &outputBlockedCWVerticalAngleEnd, /**< Destination for the end of the
+                                               blocked interval if the
+                                               intersection is found to be
+                                               blocking. This is an angle (in
+                                               degrees) with a vertical line
+                                               starting at the intersection
+                                               point and extending 'upwards'. -1
+                                               if this intersection is not
+                                               blocking. */
+      bool &outputAtMyCrit,   /**< Destination for the flag indicating that the
+                                 intersection point is at a distance critical
+                                 point (change from increasing to decreasing or
+                                 vice versa) on this curve. */
+      bool &outputAtInputCrit /**< Destination for the flag indicating that the
+                                 intersection point is at a distance critical
+                                 point (change from increasing to decreasing or
+                                 vice versa) on the input curve. */
+  ) const;
+  /**
+   * \brief Get the parameters for this curve that are along a slope from a
+   * point.
+   *
+   * Given a point and slope, calculate the parameters for this curve that will
+   * yield points that form the input slope with the input point. In other
+   * words. If the input point were to be shifted along the input slope, find
+   * the parameters for this curve where it could intersect. There may be no
+   * intersections.
+   *
+   * \see DirectionalLogic
+   *
+   * @return A list of parameters for this curve all in the range [0, 1] where
+   * the input point can match along the input slope.
+   */
+  StaticVector<RealNum, 2> pointShiftAgainstParams(
+      const Point2D
+          &input, /**< The point for which a shift is being calculated. */
+      const RealNum &slope,  /**< The slope of the shift. */
+      bool skipIntersections /**< The input point may lie along this curve. If
+                                this is the case, setting this flag to true will
+                                not include parameters for the input point. */
+  ) const;
+  /**
+   * \brief Get the parameters for this curve for a given distance from a point.
+   *
+   * Given a fulcrum point and a desired distance, calculate the parameters for
+   * this curve that result in points at the desired distance.
+   *
+   * @return A list of parameters, each in the range [startParam, endParam], for
+   * this curve that yield points at the desired distance. Possibly empty.
+   */
+  StaticVector<RealNum, 4> getCurveDistanceParams(
+      const Point2D &fulcrum,  /**< The point from which the desired distance is
+                                  calculated. */
+      const RealNum &distance, /**< The desired distance. */
+      const RealNum &startParam, /**< Calculate the desired distance over a
+                                    subset of this curve, starting at this
+                                    value. Must be in the range [0, 1]. */
+      const RealNum &endParam /**< Calculate the desired distance over a subset
+                                 of this curve, ending at this value. Must be in
+                                 the range [startParam, 1]. */
+  ) const;
+  /**
+   * \brief Get a set of intervals for this curve for its angle ranges about a
+   * fulcrum.
+   *
+   * Relative to a fulcrum, this curve will 'move', meaning that as its
+   * parameter increases it generates points that are clockwise of previous
+   * points, counterclockwise of previous points, or neither (in the case of
+   * straight lines pointing at the fulcrum).
+   *
+   * This function gets these intervals, meaning that for every interval found
+   * the parameter ranges and the angle values are added to the result. \see
+   * ClockwiseLogic
+   */
+  void getCWAngleIntervals(
+      const Point2D &fulcrum, /**< The fulcrum that the angles about are to be
+                                 calculated. */
+      StaticVector<CWAngleInterval, 4>
+          &outputFirstSet, /**< Destination for the list of results. */
+      StaticVector<CWAngleInterval, 4> &
+          outputSecondSet /**< Destination for the second list of results. This
+                             is only populated if the fulcrum is a point on this
+                             curve and in that case, this represents the angle
+                             intervals on the opposite side of the fulcrum. */
+  ) const;
+  /**
+   * \brief Determine if two parameters on a curve represent points that have a
+   * sufficiently small distance along the curve between them.
+   *
+   * Sufficiently close parameters are not necessarily parameter values that are
+   * sufficiently close, but a function of the difference in the parameters and
+   * the 'speed' at which a curve's calculated points change relative to the
+   * parameters. \see SufficientlyClose
+   *
+   * @return True if the 2 parameters represent points with a sufficiently small
+   * 'arc distance' along the curve between them.
+   */
+  bool sufficientlyCloseAlongCurve(
+      const RealNum &curveParam, /**< The first parameter for this curve. */
+      const RealNum &testParam   /**< The second parameter for this curve. */
+  ) const;
+  /**
+   * \brief Get the Bezier parameter for this curve that will result in a given
+   * point.
+   *
+   * This is effectively the reverse of \ref BezierCurveQ::valueAt.
+   *
+   * @return The parameter for this curve that results in the given point. In
+   * the range [0, 1] if the input point is found along this curve, -1 if it is
+   * not.
+   */
+  RealNum
+  paramForPoint(const Point2D &input /**< The point that a parameter for this
+                                        curve is to be found for. */
+  ) const;
+
+  /**
+   * \brief Create a 'long' straight line.
+   *
+   * The resulting curve represents a straight line that is 50000 units long
+   * with the given slope and the given point in the middle.
+   * \see DirectionalLogic
+   *
+   * @return A straight line.
+   */
+  static BezierCurveQ longStraightLine(
+      const RealNum &slope, /**< The desired slope of the resulting line. */
+      const Point2D &point /**< The mid-point of the resulting straight line. */
+  );
+  /**
+   * \brief Create a 'long' straight line.
+   *
+   * The resulting curve represents a straight line that is 25000 units long..
+   *
+   * @return A straight line, starting at a given point and extending in a
+   * direction that causes it to cross the other given point.
+   */
+  static BezierCurveQ longStraightLine(
+      const Point2D &start, /**< The start point of the desired line. */
+      const Point2D &point  /**< Another point that lies along the line, not
+                               necessarily an endpoint. */
+  );
+  /**
+   * \brief Create a straight line.
+   *
+   * @return A straight line between the two input points.
+   */
+  static BezierCurveQ
+  straightLine(const Point2D &s, /**< The start point for the desired curve. */
+               const Point2D &e  /**< The end point for the desired curve. */
+  );
+  /**
+   * \brief Determine if a result returned from \ref
+   * BezierCurveQ::pointsOfIntersection represents an infinite intersection.
+   *
+   * An infinite intersection results from determining the intersection between
+   * 2 curves that overlap and therefore intersect at an interval of parameters
+   * instead of a set of points.
+   *
+   * An infinite intersection's first entry is a pair of NaN values, but its
+   * second and third entries are the start and end parameters for the
+   * overlapping interval between the two curves.
+   *
+   * @return True if the input intersection represents an infinite intersection.
+   */
+  static bool
+  isIntersectionInfinite(const StaticVector<std::pair<RealNum, RealNum>, 4>
+                             &intersection /**< The intersection to be tested
+                                              for an infinite intersection. */
+  );
+
+  /**
+   * \brief Get a spline of Bezier curves to approximate a circle arc.
+   *
+   * Bezier curves cannot model a circle arc, but approximations can be made by
+   * using start and end points at equal distances from a fulcrum, and modeling
+   * control points to ensure that a set of such curves would be 'continuous' at
+   * each endpoint.
+   * \see ClockwiseLogic
+   *
+   * @return A collection of points representing the Bezier curve input points
+   * to create the arc approximation. The first entry is the curve endpoints,
+   * the second entry are the curve control points. The first entry always has
+   * one more entry than the second, since it also  encapsulates the end of the
+   * last edge.
+   */
   template <std::size_t EDGES>
   static typename std::enable_if<(EDGES > 1),
                                  std::pair<StaticVector<Point2D, EDGES + 1>,
                                            StaticVector<Point2D, EDGES>>>::type
-  circleArc(const Point2D &fulcrum, const RealNum &radius,
-            const RealNum &startCWPositiveVerticalAngle,
-            const RealNum &cwAngleSize) {
+  circleArc(const Point2D
+                &fulcrum, /**< The center point for the desired circle arc. */
+            const RealNum &radius, /**< The radius of the desirec circle arc. */
+            const RealNum
+                &startCWPositiveVerticalAngle, /**< The clocwise angle with a
+                                                  vertical line that the circle
+                                                  arc will start at. */
+            const RealNum
+                &cwAngleSize /**< The angle about the fulcrum that the circle
+                                arc will extend in the clockwise direction. */
+  ) {
     if (cwAngleSize <= 0 || cwAngleSize > 360) {
       throw std::string("Invalid arc angle size: ") +
           std::to_string(cwAngleSize);

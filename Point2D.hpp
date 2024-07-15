@@ -9,7 +9,7 @@
  * \defgroup ClockwiseLogic Clockwise Terminology
  *
  * The module often uses the terms 'clockwise' and 'counterclockwise' to
- * describe the direction of various rotation actions. Since these tend to
+ * describe the direction of various rotation actions. Since these tend to be
  * visual terms, they may be misinterpreted in different coordinate systems.
  * 'Clockwise' here refers to the visual term when increasing X-coordinates are
  * considered 'right' and increasing Y-coordinates are considered 'up'.

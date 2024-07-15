@@ -5948,7 +5948,7 @@ StaticVector<RealNum, 2> BezierCurveQ::pointShiftAgainstParams(
       swapSlope ? &(getParaFormX()) : &(getParaFormY());
   const RealNum yCoord = swapSlope ? input.getX() : input.getY();
   const RealNum xCoord = swapSlope ? input.getY() : input.getX();
-  PolynomialFunction<3> relationship(
+  const PolynomialFunction<3> relationship(
       {yPara->getCoefficient<0>() - yCoord +
            (calcSlope * (xCoord - xPara->getCoefficient<0>())),
        yPara->getCoefficient<1>() - (calcSlope * xPara->getCoefficient<1>()),
@@ -5959,11 +5959,10 @@ StaticVector<RealNum, 2> BezierCurveQ::pointShiftAgainstParams(
   this curve.
   */
   StaticVector<RealNum, 2> result;
-  if (/*relationship.getDegree() == 0*/ relationship.isConstant(0, 1)) {
+  if (relationship.isConstant(0, 1)) {
     if (skipIntersections) {
       return result;
     }
-    // if (getParaFormX().getDegree() > getParaFormY().getDegree())
     if (getParaFormX().effectiveDegree(0, 1) >
         getParaFormY().effectiveDegree(0, 1)) {
       for (const RealNum &currentParam :
