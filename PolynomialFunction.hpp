@@ -16,23 +16,71 @@ std::string nTs(const RealNum &input);
 
 std::string iTs(const int input);
 
+/**
+ * \brief A single variable polynomial function.
+ *
+ * For a given number of constant coefficients (a, b, c, d, e), a polynomial
+ * function has the form:
+ *
+ * at^4+bt^3+ct^2+dt+e
+ *
+ * For a single variable 't'.
+ */
 template <std::size_t COEFF_COUNT> class PolynomialFunction {
 public:
   typedef PolynomialFunction<(COEFF_COUNT > 1) ? (COEFF_COUNT - 1) : 1>
-      DerivativeType;
-  using RootsType = StaticVector<RealNum, COEFF_COUNT - 1>;
-  static constexpr std::size_t coefficientCount = COEFF_COUNT;
+      DerivativeType; /**< The type that the derivative of this function has. It
+                         is another function with a degree one lower, unless
+                         this is degree 0. */
+  using RootsType = StaticVector<
+      RealNum, COEFF_COUNT - 1>; /**< The type necessary to contain the roots of
+                                    this function. The function may not have as
+                                    many roots indicated in the structure - this
+                                    is a sufficiently large set to contain all
+                                    possible roots for a given degree. */
+  static constexpr std::size_t coefficientCount =
+      COEFF_COUNT; /**< A constant expression for the number of coefficeints in
+                      this type. */
 
-  PolynomialFunction(const std::array<RealNum, COEFF_COUNT> &coeffs)
+  /**
+   * \brief Creates a new function.
+   *
+   * A polynomial function consists of a set of coefficients, their position in
+   * the set indicating their parameter degree.
+   */
+  PolynomialFunction(
+      const std::array<RealNum, COEFF_COUNT>
+          &coeffs /**< The coefficients. The first entry is the degree 0
+                     coefficient, the second is degree 1, etc. */
+      )
       : coeffs(coeffs) {
     static_assert(COEFF_COUNT > 0,
                   "Coefficient counts must be greater than 0.");
   }
 
-  inline RealNum valueAt(const RealNum &input) const { return _valueAt(input); }
+  /**
+   * \brief Evaluates this function for a parameter value.
+   *
+   * @return The value of this function at the input parameter.
+   */
+  inline RealNum valueAt(const RealNum &input /**< The parameter value to
+                                                 evaluate this function at. */
+  ) const {
+    return _valueAt(input);
+  }
 
+  /**
+   * \brief Calculates and returns the derivative of this function.
+   *
+   * @return This function's derivative.
+   */
   inline DerivativeType getDerivative() const { return _getDerivative(); }
 
+  /**
+   * \brief Gets the coefficient value for a specified degree.
+   *
+   * @return The coefficient value for the degree. Possibly 0.
+   */
   template <std::size_t COEFF_IDX>
   inline typename std::enable_if<(COEFF_IDX >= 0) && (COEFF_IDX < COEFF_COUNT),
                                  const RealNum &>::type
@@ -40,8 +88,21 @@ public:
     return coeffs[COEFF_IDX];
   }
 
-  RootsType getRoots(const RealNum &lowerBound,
-                     const RealNum &upperBound) const {
+  /**
+   * \brief The the roots of this function.
+   *
+   * The roots of a function are where it equals 0. This calculates all roots
+   * within the specified range.
+   *
+   * @return A set of parameter values representing the roots of this function
+   * within the input interval.
+   */
+  RootsType
+  getRoots(const RealNum &lowerBound, /**< The minimum parameter value that
+                                         roots are to be calculated for. */
+           const RealNum &upperBound /**< The maximum parameter value that roots
+                                        are to be calculated for. */
+  ) const {
     if (lowerBound > upperBound) {
       throw std::string(
           "Attempted to get roots over an interval with negative size.");
@@ -125,11 +186,32 @@ public:
     return result;
   }
 
+  /**
+   * \brief Get a string representation of this function.
+   *
+   * @return A string representation of this function in the form
+   * ax^2[+-]bx[+-]c.
+   */
   std::string toString() const { return _toString(); }
 
-  void minMaxValues(const RealNum &lowerBound, const RealNum &upperBound,
-                    RealNum &resultMin, RealNum &resultMinPara,
-                    RealNum &resultMax, RealNum &resultMaxPara) const {
+  /**
+   * \brief Get the minimum and maximum values of this function over an
+   * interval.
+   */
+  void minMaxValues(
+      const RealNum &lowerBound, /**< The start of the interval to calculate
+                                    min/max values for. */
+      const RealNum &upperBound, /**< The end of the interval to calculate
+                                    min/max values for. */
+      RealNum &resultMin, /**< Destination for the minimum value over the input
+                             interval. */
+      RealNum &resultMinPara, /**< Destination for the parameter for the minimum
+                                 value over the input interval. */
+      RealNum &resultMax,     /**< Destination for the maximum value over the
+                                 interval. */
+      RealNum &resultMaxPara  /**< Destination for the parameter for the maximum
+                                 value over the input interval. */
+  ) const {
     if (lowerBound > upperBound) {
       throw std::string("Input interval has a negative size.");
     }
@@ -137,15 +219,41 @@ public:
                   resultMaxPara);
   }
 
-  inline bool isConstant(const RealNum &lowerBound,
-                         const RealNum &upperBound) const {
+  /**
+   * \brief Determine if this is a constant function on the specified interval.
+   *
+   * Any degree 0 (only one coefficient) function is constant, but others may
+   * also be considered constant over an interval if its derivatives are also
+   * considered to be both sufficiently small and constant as well. \see
+   * SufficientlyClose
+   *
+   * @return True if this function is sufficiently constant over the input
+   * interval.
+   */
+  inline bool isConstant(
+      const RealNum
+          &lowerBound, /**< The start of the parameter interval to check. */
+      const RealNum
+          &upperBound /**< The end of the parameter interval to check. */
+  ) const {
     return _isConstant(lowerBound, upperBound);
   }
 
+  /**
+   * \brief Get the result of subtracting a function from this function.
+   *
+   * Polynomial subtraction is done by getting the difference between all
+   * coefficients for corresponding degrees and using those for a new function.
+   *
+   * @return The function that results from subtracting the input function from
+   * this.
+   */
   template <std::size_t INPUT_COEFF_COUNT>
   PolynomialFunction<(COEFF_COUNT > INPUT_COEFF_COUNT) ? COEFF_COUNT
                                                        : INPUT_COEFF_COUNT>
-  subtract(const PolynomialFunction<INPUT_COEFF_COUNT> &input) const {
+  subtract(const PolynomialFunction<INPUT_COEFF_COUNT>
+               &input /**< The fucntion to subtract from this. */
+  ) const {
     std::array<RealNum, (COEFF_COUNT > INPUT_COEFF_COUNT) ? COEFF_COUNT
                                                           : INPUT_COEFF_COUNT>
         subtractedCoeffs;
@@ -153,11 +261,33 @@ public:
     return subtractedCoeffs;
   }
 
+  /**
+   * \brief Get the degree of this function, excluding sufficiently
+   * inconsequential coefficients.
+   *
+   * While a function may have higher degree coefficients, they may be so small
+   * relative to the values of this function in a given range that it would be
+   * inappropriate to consider it to be of that degree. This makes use of the
+   * 'constant' logic in this class to determine if a degree is 'effective'.
+   * \see PolynomialFunction:isConstant
+   *
+   * @return The effective degree of this function; i.e. the highest degree
+   * without an inconsequentially small coefficient.
+   */
   inline std::size_t effectiveDegree(const RealNum &lowerBound,
                                      const RealNum &upperBound) const {
     return _effectiveDegree(lowerBound, upperBound);
   }
 
+  /**
+   * \brief Tests if a function is equal to another.
+   *
+   * A function is equal to another if they have the same number of coefficients
+   * and the coefficients are equal. This is a higher requirement than the
+   * 'sufficiently close' conditions. \see GeometryUtil
+   *
+   * @return True if this function and the input function are equal.
+   */
   template <std::size_t INPUT_COEFF_COUNT>
   inline bool
   operator==(const PolynomialFunction<INPUT_COEFF_COUNT> &input) const {
