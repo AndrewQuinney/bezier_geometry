@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<canvas id="myCanvas" width="600" height="400" style="border:1px solid #d3d3d3;">
+Your browser does not support the HTML5 canvas tag.</canvas>
+
+<script>
+
+var c = document.getElementById("myCanvas");
+var ctx = c.getContext("2d");
+ctx.translate(0, c.height);
+var scaleFactor = 1.4;
+ctx.scale(scaleFactor, scaleFactor*-1.0);
+ctx.lineWidth=1/scaleFactor;
+ctx.strokeStyle="black";
+
+ctx.fillStyle="lightgreen";
+ctx.beginPath();
+ctx.moveTo(100, 100);
+ctx.quadraticCurveTo(100, 150, 100, 200);
+ctx.quadraticCurveTo(150, 200, 200, 200);
+ctx.quadraticCurveTo(100, 150, 200, 100);
+ctx.quadraticCurveTo(150, 100, 100, 100);
+ctx.stroke();
+ctx.fill();
+
+ctx.save();
+ctx.translate(191.547986838777092, -19.154798683877715);
+ctx.fillStyle="lightgreen";
+ctx.strokeStyle="gray";
+ctx.beginPath();
+ctx.moveTo(100, 100);
+ctx.quadraticCurveTo(100, 150, 100, 200);
+ctx.quadraticCurveTo(150, 200, 200, 200);
+ctx.quadraticCurveTo(100, 150, 200, 100);
+ctx.quadraticCurveTo(150, 100, 100, 100);
+ctx.stroke();
+ctx.restore();
+
+ctx.fillStyle="pink";
+ctx.beginPath();
+ctx.moveTo(400, 100);
+ctx.quadraticCurveTo(400, 125, 400, 150);
+ctx.quadraticCurveTo(300, 100, 400, 100);
+ctx.stroke();
+ctx.fill();
+
+ctx.fillStyle="blue";
+ctx.beginPath();
+ctx.arc(160.14098358878544559047, 127.48224746029765697131, 3/scaleFactor, 0, 2*Math.PI);
+ctx.fill();
+
+ctx.fillStyle="black";
+ctx.beginPath();
+ctx.arc(351.68897042756253767948, 108.32744877641994207806, 3/scaleFactor, 0, 2*Math.PI);
+ctx.fill();
+
+</script> 
+
+</body>
+</html>

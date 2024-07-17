@@ -7,19 +7,6 @@ std::ostream &operator<<(std::ostream &os, const std::pair<A, B> &input) {
   return os;
 }
 
-// template <typename T>
-// std::ostream &operator<<(std::ostream &os, const std::vector<T> &input) {
-//   os << "[";
-//   for (const T &current : input) {
-//     if (&current != &input.front()) {
-//       os << ",";
-//     }
-//     os << current;
-//   }
-//   os << "]";
-//   return os;
-// }
-
 typedef struct {
   bezier_geometry::Point2D inputStart;
   bezier_geometry::Point2D inputEnd;

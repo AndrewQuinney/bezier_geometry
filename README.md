@@ -71,4 +71,55 @@ In the below diagram, the two shapes are illustrated as well as their respective
 ![Shift Visualization](readme_assets/shift_example.png)
 
 ### Rotating
-TODO
+A simple example of constructing shapes and performing a 'shift' calculation is as follows:
+
+    // The green shape.
+    const bezier_geometry::Shape moving(
+      {
+        bezier_geometry::Point2D(100, 100),
+        bezier_geometry::Point2D(100, 200),
+        bezier_geometry::Point2D(200, 200),
+        bezier_geometry::Point2D(200, 100)
+      },
+      {
+        bezier_geometry::Point2D(100, 150),
+        bezier_geometry::Point2D(150, 200),
+        bezier_geometry::Point2D(100, 150),
+        bezier_geometry::Point2D(150, 100)
+      });
+    // The red shape.
+    const bezier_geometry::Shape stationary(
+      {
+        bezier_geometry::Point2D(300, 100),
+        bezier_geometry::Point2D(400, 100)
+      },
+      {
+        bezier_geometry::Point2D(350, 100),
+        bezier_geometry::Point2D(300, 150)
+      });
+    bezier_geometry::Shape::RotateAgainstResult result;
+    moving.rotateAgainst(
+      stationary, 
+      bezier_geometry::Point2D(250, 50), // Cyan dot.
+      true, // Clockwise.
+      result);
+    // The angle that the moving shape could rotate about the fulcrum before being 'blocked'.
+    std::cout << "Angle to block: " << result.movingEdgeResult.angle << std::endl;
+    std::cout << "Moving edge param: " << result.movingEdgeResult.param << std::endl;
+    // Blue dot. The point on the moving shape where it will be blocked by the stationary shape.
+    std::cout << "Moving blocked point: " << result.movingEdge->valueAt(result.movingEdgeResult.param) << std::endl;
+    std::cout << "Stationary edge param: " << result.movingEdgeResult.inputParam << std::endl;
+    // Black dot. The point on the stationary shape where it will block the stationary shape.
+    std::cout << "Stationary blocked point: " << result.stationaryEdge->valueAt(result.movingEdgeResult.inputParam) << std::endl;
+
+The output of the above code snippet:
+
+    Angle to block: 87.1146
+    Moving edge param: 0.940507
+    Moving blocked point: (188.80936214518857241274, 105.94925531549519348573)
+    Stationary edge param: 0.832725
+    Stationary blocked point: (302.79810817128520739061, 113.92943848471071532913)
+
+In the below diagram, the two shapes are illustrated as well as their respective blocked/blocking points. An outline of the result of rotating the moving shape by the angle calculated is also included to indicate that this is indeed the correct blocking point.
+
+![Rotate Visualization](readme_assets/rotate_example.png)

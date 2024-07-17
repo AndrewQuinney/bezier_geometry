@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<canvas id="myCanvas" width="600" height="400" style="border:1px solid #d3d3d3;">
+Your browser does not support the HTML5 canvas tag.</canvas>
+
+<script>
+
+var c = document.getElementById("myCanvas");
+var ctx = c.getContext("2d");
+ctx.translate(0, c.height);
+var scaleFactor = 1.4;
+ctx.scale(scaleFactor, scaleFactor*-1.0);
+ctx.lineWidth=1/scaleFactor;
+ctx.strokeStyle="black";
+
+ctx.fillStyle="lightgreen";
+ctx.beginPath();
+ctx.moveTo(100, 100);
+ctx.quadraticCurveTo(100, 150, 100, 200);
+ctx.quadraticCurveTo(150, 200, 200, 200);
+ctx.quadraticCurveTo(100, 150, 200, 100);
+ctx.quadraticCurveTo(150, 100, 100, 100);
+ctx.stroke();
+ctx.fill();
+
+ctx.save();
+ctx.translate(250, 50);
+ctx.rotate(-87.1146*Math.PI/180);
+ctx.translate(-250, -50);
+ctx.fillStyle="lightgreen";
+ctx.strokeStyle="gray";
+ctx.beginPath();
+ctx.moveTo(100, 100);
+ctx.quadraticCurveTo(100, 150, 100, 200);
+ctx.quadraticCurveTo(150, 200, 200, 200);
+ctx.quadraticCurveTo(100, 150, 200, 100);
+ctx.quadraticCurveTo(150, 100, 100, 100);
+ctx.stroke();
+ctx.restore();
+
+ctx.beginPath();
+ctx.strokeStyle="gray";
+ctx.arc(250, 50, 82.913288026932983, 0.880472, 2.40091)
+ctx.stroke();
+
+ctx.fillStyle="pink";
+ctx.beginPath();
+ctx.moveTo(300, 100);
+ctx.quadraticCurveTo(350, 100, 400, 100);
+ctx.quadraticCurveTo(300, 150, 300, 100);
+ctx.stroke();
+ctx.fill();
+
+ctx.fillStyle="blue";
+ctx.beginPath();
+ctx.arc(188.80936214518857241274, 105.94925531549519348573, 3/scaleFactor, 0, 2*Math.PI);
+ctx.fill();
+
+ctx.fillStyle="black";
+ctx.beginPath();
+ctx.arc(302.79810817128520739061, 113.92943848471071532913, 3/scaleFactor, 0, 2*Math.PI);
+ctx.fill();
+
+ctx.fillStyle="cyan";
+ctx.beginPath();
+ctx.arc(250, 50, 4/scaleFactor, 0, 2*Math.PI);
+ctx.fill();
+ctx.stroke();
+
+</script> 
+
+</body>
+</html>
