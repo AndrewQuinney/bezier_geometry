@@ -1,5 +1,7 @@
 # bezier_geometry
 Intersection and collision detection for shapes consisting of quadratic Bézier curves.
+
+[Code Documentation](https://andrewquinney.github.io/bezier_geometry/)
 ## Requirements
 Initial generation of makefiles can be done by opening the project in [NetBeans](https://netbeans.apache.org/front/main/index.html) after installing the CPPLite plugin:
 
